@@ -42,7 +42,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
-
+     
    
     def format_weight(self, weight):
         if weight is not None:
