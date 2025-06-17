@@ -1496,7 +1496,7 @@ class  UserApprovedFullOrdersView(APIView):
         ).exclude(new_status='delivered')
         
    
-        serializer = FullCustomizedOrderSerializer(pending_orders, many=True)
+        serializer = FullCustomizedGetSerializer(pending_orders, many=True)
         
         return Response(serializer.data)
     

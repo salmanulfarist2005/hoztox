@@ -6,18 +6,18 @@ from decimal import Decimal, InvalidOperation
 class UserTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserType
-        fields = ['id', 'usertype']
+        fields =  '__all__'
         
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'category_name', 'image'] 
+        fields =  '__all__' 
         
         
 class ProductMultipleImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductMultipleImages
-        fields = ['id', 'image']
+        fields =  '__all__'
 
  
 
@@ -28,10 +28,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product  
-        fields = ['id', 'SKU', 'product_name', 'category', 
-                  'gross_weight', 'diamond_weight', 'colour_stones', 
-                  'net_weight',  'description', 
-                  'usertypes', 'product_image', 'additional_images'] 
+        fields =  '__all__'
 
 
 class ProductCartSerializer(serializers.ModelSerializer):
@@ -41,10 +38,7 @@ class ProductCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product  
-        fields = ['id', 'SKU', 'product_name', 'category', 
-                  'gross_weight', 'diamond_weight', 'colour_stones', 
-                  'net_weight',  'description', 
-                  'usertypes', 'product_image', 'additional_images'] 
+        fields =  '__all__'
 
 class ProductListSerializer(serializers.ModelSerializer):
     usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all(), many=True)
@@ -55,12 +49,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = [
-            'id', 'SKU', 'product_name', 'category', 'category_name',
-             'gross_weight', 'diamond_weight', 'colour_stones',
-            'net_weight',   'description',
-            'usertypes', 'product_image', 'additional_images'
-        ]
+        fields =  '__all__'
 
     def get_category_name(self, obj):
         return obj.category.category_name if obj.category else None
@@ -71,13 +60,23 @@ class ProductListSerializer(serializers.ModelSerializer):
         return None  
 
     
+class ProductListOrderSerializer(serializers.ModelSerializer):
     
-    
+    additional_images = ProductMultipleImagesSerializer(many=True, required=False)
+    category = CategorySerializer()
+
+      
+
+    class Meta:
+        model = Product
+        fields =  '__all__'
+
+  
     
 class CustomizedProductMultipleImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomizedProductMultipleImages
-        fields = ['id', 'image']
+        fields =  '__all__'
 
 
  
@@ -88,10 +87,7 @@ class CustomizedProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomizedProduct  
-        fields = ['id', 'SKU', 'product_name', 'category',  
-                  'gross_weight', 'diamond_weight', 'colour_stones', 
-                  'net_weight',  'description', 
-                  'usertypes', 'product_image', 'additional_images'] 
+        fields =  '__all__'
 
 
 class CustomizedProductListSerializer(serializers.ModelSerializer):
@@ -101,37 +97,32 @@ class CustomizedProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomizedProduct
-        fields = ['id', 'SKU', 'product_name','category', 'category_name', 
-                  'gross_weight', 'diamond_weight', 'colour_stones', 
-                  'net_weight',   'description', 
-                  'usertypes', 'product_image', 'additional_images']
+        fields =  '__all__'
 
     def get_category_name(self, obj):
         return obj.category.category_name if obj.category else None 
     
+
+
+class CustomizedProductOrderSerializer(serializers.ModelSerializer):
     
+     
+    category = CategorySerializer() 
+
+    class Meta:
+        model = CustomizedProduct
+        fields =  '__all__'
+
+ 
+    
+   
 class UserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
     usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all())  # Add this line
 
     class Meta:
         model = User
-        fields = [
-            'id',
-            'full_name',
-            'email',
-            'mobile_number',
-            'whatsapp_number',
-            'company_name',
-            'shipping_address',
-            'company_logo',
-            'company_email',
-            'company_website',
-            'username',
-            'password',
-            'confirm_password',
-            'usertypes',  
-        ]
+        fields =  '__all__'
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -156,22 +147,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            'id',
-            'full_name',
-            'email',
-            'mobile_number',
-            'whatsapp_number',
-            'company_name',
-           
-            'shipping_address',
-            'company_logo',
-            'company_email',
-            'company_website',
-            'username',
-            'password',
-            'usertypes',
-        ]
+        fields =  '__all__'
 
     def validate_email(self, value):
         if self.instance and value != self.instance.email:
@@ -215,7 +191,7 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ['id', 'product_id', 'quantity', 'color']
+        fields =  '__all__'
 
     def create(self, validated_data):
         product_id = validated_data.pop('product_id')
@@ -270,7 +246,7 @@ class CartGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ['id', 'product_id', 'quantity', 'product','color', 'gross_weight', 'colour_stones', 'diamond_weight', 'net_weight']
+        fields =  '__all__'
 
 # class OrderItemSerializer(serializers.ModelSerializer):
 #     product = serializers.CharField(source='product.code')  
@@ -302,7 +278,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     color = serializers.CharField(required=False, allow_blank=True, default=None)
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'quantity','color', 'additional_notes']
+        fields =  '__all__'
 
     def create(self, validated_data):
         sku = validated_data.pop('product')  
@@ -322,8 +298,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'total_gross_weight', 'total_diamond_weight', 
-                  'total_colour_stones', 'total_net_weight', 'created_at', 'order_items']
+        fields =  '__all__'
         extra_kwargs = {'user': {'read_only': True}}
 
     def create(self, validated_data):
@@ -368,22 +343,7 @@ class OrderSerializer(serializers.ModelSerializer):
 class UserGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = [
-            'full_name',
-            'email',
-            'mobile_number',
-            'whatsapp_number',
-            'company_name',
-            
-            'shipping_address',
-            'company_logo',
-            'company_email',
-            'company_website',
-            'username',
-            'usertypes',
-            'prof_image',  
-        ]
-
+        fields =  '__all__'
     def update(self, instance, validated_data):
         if 'prof_image' in validated_data:
             instance.prof_image = validated_data['prof_image']  
@@ -391,11 +351,11 @@ class UserGetSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializerss(serializers.ModelSerializer):
-    product = ProductListSerializer()   
+    product = ProductListOrderSerializer()   
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'quantity','color',  'additional_notes']
+        fields =  '__all__'
         
         
 class OrderSerializerss(serializers.ModelSerializer):
@@ -404,10 +364,10 @@ class OrderSerializerss(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'ordercode', 'user', 'total_gross_weight', 'total_diamond_weight','created_at' ,'status',
-                  'total_colour_stones', 'total_net_weight', 'created_at', 'order_items']
+        fields =  '__all__'
         extra_kwargs = {'user': {'read_only': True}}
-        
+
+      
 
 
 
@@ -415,28 +375,21 @@ class OrderSerializerss(serializers.ModelSerializer):
 class ColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Color
-        fields = ['id', 'color']
+        fields =  '__all__'
         
  
 
 class CustomizedOrderSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer(read_only=True)  
+    product = CustomizedProductOrderSerializer(read_only=True)  
     color = ColorSerializer(read_only=True)       
     user = UserSerializer(read_only=True)       
 
     class Meta:
         model = CustomizedOrder
-        fields = [
-            'id', 'new_status', 'product', 'size', 'user','gram', 'ordercode', 
-            'cent', 'color', 'description', 'quantity', 'due_date','created_at'
-        ]
-        extra_kwargs = {'user': {'read_only': True}}
+        fields = '__all__'
+      
    
-    def validate_new_status(self, value):
-        valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
-        if value not in valid_choices:
-            raise serializers.ValidationError(f"Invalid new_status. Choose from {valid_choices}.")
-        return value
+ 
 
 
 
@@ -450,7 +403,7 @@ class CustomizedOrderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomizedOrder
-        fields = ['id', 'new_status', 'product', 'size', 'user', 'gram', 'ordercode', 'cent', 'color', 'description', 'quantity', 'due_date']
+        fields = '__all__'
         extra_kwargs = {'user': {'read_only': True}}
 
     def validate_new_status(self, value):
@@ -484,12 +437,7 @@ class FullCustomizedOrderListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FullCustomizedOrder
-        fields = [
-            'id','user','new_status' ,'category' ,'due_date', 'design_number','created_at',
-            'size', 'gram', 'cent', 'color', 
-            'description', 'quantity', 'ordercode', 
-            'status', 'additional_images'
-        ]
+        fields = '__all__'
     def validate_new_status(self, value):
     
         valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
@@ -505,25 +453,46 @@ class FullCustomizedOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FullCustomizedOrder
-        fields = [
-            'id','user','new_status' ,'category','due_date', 'design_number','created_at',
-            'size', 'gram', 'cent', 'color', 
-            'description', 'quantity', 'ordercode', 
-            'status', 'additional_images'
-        ]
+        fields = '__all__'
     def validate_new_status(self, value):
     
         valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
         if value not in valid_choices:
             raise serializers.ValidationError(f"Invalid new_status. Choose from {valid_choices}.")
         return value
+    
+class FullCustomizedGetSerializer(serializers.ModelSerializer):
+    category= CategorySerializer()
+    color = ColorSerializer()
+    user =  UserSerializer()
+   
+
+    class Meta:
+        model = FullCustomizedOrder
+        fields = '__all__'
+    def validate_new_status(self, value):
+    
+        valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
+        if value not in valid_choices:
+            raise serializers.ValidationError(f"Invalid new_status. Choose from {valid_choices}.")
+        return value    
+
 class OrderIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['id', 'ordercode']
+        fields = '__all__'
         
         
- 
+class FullCustomizedOrderGetSerializer(serializers.ModelSerializer):
+    category= CategorySerializer()
+  
+    color =ColorSerializer()
+    user = serializers.ReadOnlyField(source='user.id')
+    additional_images = FullCustomizedMultipleImagesSerializer(many=True, read_only=True, source='full_additional_images')
+    class Meta:
+        model = FullCustomizedOrder
+        fields = '__all__'
+     
  
 
 class OrderItemUpdateSerializer(serializers.ModelSerializer):
