@@ -1,11 +1,9 @@
 from django.db import models
 from .models import *
 from django.contrib.auth.hashers import make_password
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission
-from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Group, Permission, BaseUserManager
+from decimal import Decimal
 
 
 
@@ -25,8 +23,7 @@ class Category(models.Model):
         return self.category_name   
 
 
-from django.db import models
-from decimal import Decimal
+
 
 class Product(models.Model):
     SKU = models.CharField(max_length=100, unique=True)
@@ -48,6 +45,8 @@ class Product(models.Model):
         if weight is not None:
             return '{:g}'.format(weight)
         return None
+    
+    
 
 class ProductMultipleImages(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images')
@@ -186,6 +185,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'pending'),
         ('delivered', 'delivered'),
+        ('accepted', 'accepted'),
          
     ] 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

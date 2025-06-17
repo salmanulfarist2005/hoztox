@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
-
+from decimal import Decimal, InvalidOperation
+ 
 
 class UserTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -206,8 +207,7 @@ class MediaSerializer(serializers.ModelSerializer):
         model = Media
         fields = ['id', 'image']
         
-from rest_framework import serializers
-from .models import Cart, Product  
+
 
 class CartSerializer(serializers.ModelSerializer):
     product_id = serializers.IntegerField(write_only=True)
@@ -315,7 +315,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return OrderItem.objects.create(product=product, **validated_data)
 
 
-from decimal import Decimal, InvalidOperation
+
 
 class OrderSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True)
@@ -417,7 +417,7 @@ class ColorSerializer(serializers.ModelSerializer):
         model = Color
         fields = ['id', 'color']
         
-from rest_framework import serializers
+ 
 
 class CustomizedOrderSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)  
