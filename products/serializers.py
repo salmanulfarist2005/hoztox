@@ -152,7 +152,7 @@ class UserSerializer(serializers.ModelSerializer):
  
 
 class UserUpdateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)  # Ensure password is write-only
+    password = serializers.CharField(write_only=True, required=False) 
     usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all(), allow_null=True)
 
     class Meta:
@@ -172,19 +172,29 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def update(self, instance, validated_data):
-    
-        password = validated_data.pop('password', None)   
+        password = validated_data.pop('password', None)
 
-    
+     
+        m2m_fields = {}
+        for field in instance._meta.many_to_many:
+            field_name = field.name
+            if field_name in validated_data:
+                m2m_fields[field_name] = validated_data.pop(field_name)
+ 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-       
         if password:
             instance.password = make_password(password)
 
-        instance.save()   
+        instance.save()
+
+    
+        for field_name, value in m2m_fields.items():
+            getattr(instance, field_name).set(value)
+
         return instance
+
     
     
 
