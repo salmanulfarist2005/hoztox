@@ -191,7 +191,8 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields =  '__all__'
+        
+        exclude = ['user', 'product'] 
 
     def create(self, validated_data):
         product_id = validated_data.pop('product_id')
@@ -279,6 +280,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields =  '__all__'
+        extra_kwargs = {
+            'order': {'read_only': True} 
+        }
 
     def create(self, validated_data):
         sku = validated_data.pop('product')  
@@ -403,7 +407,7 @@ class CustomizedOrderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomizedOrder
-        fields = '__all__'
+        fields = ['id', 'new_status', 'product', 'size', 'user', 'gram', 'ordercode', 'cent', 'color', 'description', 'quantity', 'due_date']
         extra_kwargs = {'user': {'read_only': True}}
 
     def validate_new_status(self, value):
@@ -437,7 +441,12 @@ class FullCustomizedOrderListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FullCustomizedOrder
-        fields = '__all__'
+        fields = [
+            'id','user','new_status' ,'category' ,'due_date', 'design_number','created_at',
+            'size', 'gram', 'cent', 'color', 
+            'description', 'quantity', 'ordercode', 
+            'status', 'additional_images'
+        ]
     def validate_new_status(self, value):
     
         valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
@@ -453,7 +462,12 @@ class FullCustomizedOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FullCustomizedOrder
-        fields = '__all__'
+        fields = [
+            'id','user','new_status' ,'category','due_date', 'design_number','created_at',
+            'size', 'gram', 'cent', 'color', 
+            'description', 'quantity', 'ordercode', 
+            'status', 'additional_images'
+        ]
     def validate_new_status(self, value):
     
         valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
@@ -465,11 +479,16 @@ class FullCustomizedGetSerializer(serializers.ModelSerializer):
     category= CategorySerializer()
     color = ColorSerializer()
     user =  UserSerializer()
-   
+    additional_images = FullCustomizedMultipleImagesSerializer(many=True, read_only=True, source='full_additional_images')
 
     class Meta:
         model = FullCustomizedOrder
-        fields = '__all__'
+        fields = [
+            'id','user','new_status' ,'category','due_date', 'design_number','created_at',
+            'size', 'gram', 'cent', 'color', 
+            'description', 'quantity', 'ordercode', 
+            'status', 'additional_images'
+        ]
     def validate_new_status(self, value):
     
         valid_choices = [choice[0] for choice in CustomizedOrder.NEW_STATUS_CHOICES]
@@ -480,7 +499,7 @@ class FullCustomizedGetSerializer(serializers.ModelSerializer):
 class OrderIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'ordercode']
         
         
 class FullCustomizedOrderGetSerializer(serializers.ModelSerializer):
