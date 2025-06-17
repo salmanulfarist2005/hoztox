@@ -130,14 +130,24 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         confirm_password = validated_data.pop('confirm_password', None)
 
-    
         if validated_data['password'] != confirm_password:
             raise serializers.ValidationError({"password": "Passwords do not match."})
+
+        groups_data = validated_data.pop('groups', [])
+        user_permissions_data = validated_data.pop('user_permissions', [])
 
         user = User(**validated_data)
         user.set_password(validated_data['password'])
         user.save()
+
+        # Now set M2M fields
+        if groups_data:
+            user.groups.set(groups_data)
+        if user_permissions_data:
+            user.user_permissions.set(user_permissions_data)
+
         return user
+
 
  
 
