@@ -1142,12 +1142,12 @@ class UserLoginView(APIView):
             if not user.check_password(password):
                 return Response({'error': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
-            # Generate tokens
+       
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
-            # Print tokens to console
+           
             print("Access Token:", access_token)
             print("Refresh Token:", refresh_token)
 

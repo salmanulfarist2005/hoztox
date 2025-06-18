@@ -45,6 +45,7 @@ urlpatterns = [
    path('update-profile/', UserProfileView.as_view(), name='current-user'),
    path('user/login/', UserLoginView.as_view(), name='user-login'),
    
+   
    # admin login
    path('login/', AdminLoginView.as_view(), name='admin-login'),
 
