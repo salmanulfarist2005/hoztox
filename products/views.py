@@ -453,26 +453,32 @@ class CustomizedProductDeleteView(APIView):
 
 
 
+ 
 
 class UserCreateView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-  
 
     def create(self, request, *args, **kwargs):
         print("Incoming Data:", request.data)
-        
+
         serializer = self.get_serializer(data=request.data)
-        
+
         if not serializer.is_valid():
-            print("Validation Errors:", serializer.errors)   
+            print("Validation Errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+      
+        validated_data = serializer.validated_data
+        if "is_active" not in validated_data:
+            validated_data["is_active"] = True
+
         print("Before Saving User")
         self.perform_create(serializer)
-        print("Created User Data:", serializer.data)   
-        
+        print("Created User Data:", serializer.data)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 class UserListAPIView(generics.ListAPIView):
