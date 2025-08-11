@@ -118,11 +118,11 @@ class CustomizedProductOrderSerializer(serializers.ModelSerializer):
    
 class UserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
-    usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all())  # Add this line
+    usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all())
 
     class Meta:
         model = User
-        fields =  '__all__'
+        fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -136,11 +136,14 @@ class UserSerializer(serializers.ModelSerializer):
         groups_data = validated_data.pop('groups', [])
         user_permissions_data = validated_data.pop('user_permissions', [])
 
-        user = User(**validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
+        password = validated_data.pop('password')
+        # Ensure active by default
+        validated_data.setdefault('is_active', True)
 
-        # Now set M2M fields
+        # Create user through manager
+        user = User.objects.create_user(password=password, **validated_data)
+
+        # Set M2M fields
         if groups_data:
             user.groups.set(groups_data)
         if user_permissions_data:
