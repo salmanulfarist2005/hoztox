@@ -137,13 +137,13 @@ class UserSerializer(serializers.ModelSerializer):
         user_permissions_data = validated_data.pop('user_permissions', [])
 
         password = validated_data.pop('password')
-        # Ensure active by default
-        validated_data.setdefault('is_active', True)
 
-        # Create user through manager
+ 
+        validated_data['is_active'] = True
+   
+
         user = User.objects.create_user(password=password, **validated_data)
 
-        # Set M2M fields
         if groups_data:
             user.groups.set(groups_data)
         if user_permissions_data:

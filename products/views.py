@@ -463,21 +463,14 @@ class UserCreateView(generics.CreateAPIView):
         print("Incoming Data:", request.data)
 
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not serializer.is_valid():
-            print("Validation Errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # This ensures even if the frontend sends false, we ignore it
+        serializer.validated_data['is_active'] = True  
 
-      
-        validated_data = serializer.validated_data
-        if "is_active" not in validated_data:
-            validated_data["is_active"] = True
-
-        print("Before Saving User")
         self.perform_create(serializer)
-        print("Created User Data:", serializer.data)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 
