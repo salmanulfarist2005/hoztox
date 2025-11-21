@@ -44,7 +44,7 @@ import os
 from .models import Product, Category, UserType, Media
 from .serializers import MediaSerializer
 import django.db.models as models
- 
+from .utils import StandardPagination
 
 
 class UserTypeListCreateView(generics.ListCreateAPIView):
@@ -53,19 +53,54 @@ class UserTypeListCreateView(generics.ListCreateAPIView):
 
 
 
-class UserTypeListView(generics.ListAPIView):
-    queryset = UserType.objects.all()
-    serializer_class = UserTypeSerializer
+# class UserTypeListView(generics.ListAPIView):
+#     queryset = UserType.objects.all()
+#     serializer_class = UserTypeSerializer
 
-    def list(self, request, *args, **kwargs):
+#     def list(self, request, *args, **kwargs):
      
-        response = super().list(request, *args, **kwargs)
+#         response = super().list(request, *args, **kwargs)
         
  
-        print("Response Data:", response.data)   
+#         print("Response Data:", response.data)   
         
    
+#         return response
+
+
+class UserTypeListView(generics.ListAPIView):
+    queryset = UserType.objects.all().order_by('-id')
+    serializer_class = UserTypeSerializer
+    pagination_class = StandardPagination
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "usertype",     
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+
+        print("Response Data:", response.data)
+
         return response
+
+
+
  
 class UserTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserType.objects.all()
@@ -79,12 +114,37 @@ class CategoryCreateAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+# class CategoryListAPIView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         categories = Category.objects.all().order_by('id')
+#         serializer = CategorySerializer(categories, many=True)
+#         return Response(serializer.data)
+
+
 class CategoryListAPIView(APIView):
+
     def get(self, request, *args, **kwargs):
-        # Retrieve categories and order by ID
-        categories = Category.objects.all().order_by('id')
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data)
+        queryset = Category.objects.all().order_by('id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "category_name",          
+            )
+
+        is_paginated = str(request.GET.get('is_paginated')).lower() == 'true'
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CategorySerializer
+            )
+
+        serializer = CategorySerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CategoryDetailAPIView(APIView):
     def get_object(self, id):
@@ -179,23 +239,75 @@ class ProductListCreateView(APIView):
 
 
 
-class ProductListView(APIView):
-    def get(self, request):
-        products = Product.objects.all()
-        serializer = ProductListSerializer(products, many=True)
+# class ProductListView(APIView):
+#     def get(self, request):
+#         products = Product.objects.all()
+#         serializer = ProductListSerializer(products, many=True)
       
-        return Response(serializer.data, status=status.HTTP_200_OK)
- 
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+from products.utils import get_paginated_response, apply_search
+
+class ProductListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = Product.objects.all().order_by('-id')
+
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product_name",          
+                "SKU",
+                "category__category_name",
+            )
+
+  
+        is_paginated = str(request.GET.get('is_paginated')).lower() == 'true'
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=ProductSerializer
+            )
+
+        serializer = ProductSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)    
+
+# class ProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):      
+#         current_user_usertype = request.user.usertypes  
+#         products = Product.objects.filter(usertypes=current_user_usertype)      
+#         serializer = ProductListSerializer(products, many=True)    
+#         return Response(serializer.data)
 
 
 class ProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):      
+    def get(self, request, *args, **kwargs):
         current_user_usertype = request.user.usertypes  
-        products = Product.objects.filter(usertypes=current_user_usertype)      
-        serializer = ProductListSerializer(products, many=True)    
-        return Response(serializer.data)
+        queryset = Product.objects.filter(usertypes=current_user_usertype).order_by('-id')
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=ProductListSerializer
+            )
+
+        serializer = ProductListSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
  
 class ProductUpdateView(APIView):
@@ -351,26 +463,84 @@ class CustomizedProductListCreateView(APIView):
 
 
 
-class CustomizedProductListView(APIView):
-    def get(self, request):
-        products = CustomizedProduct.objects.all()
-        serializer = CustomizedProductListSerializer(products, many=True)
-        print("serializer.data",serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+# class CustomizedProductListView(APIView):
+#     def get(self, request):
+#         products = CustomizedProduct.objects.all()
+#         serializer = CustomizedProductListSerializer(products, many=True)
+#         print("serializer.data",serializer.data)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
  
+
+
+class CustomizedProductListView(APIView):
+
+    def get(self, request):
+
+        queryset = CustomizedProduct.objects.all().order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product_name",          
+                "SKU",
+                "category__category_name",  
+            )
+
+        is_paginated = str(request.GET.get('is_paginated')).lower() == 'true'
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CustomizedProductListSerializer
+            )
+
+        serializer = CustomizedProductListSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)    
+
+
+# class CustomProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+  
+#         current_user_usertype = request.user.usertypes
+  
+#         products = CustomizedProduct.objects.filter(usertypes=current_user_usertype)  
+#         print("Fetched Products:", products)     
+#         serializer = CustomizedProductListSerializer(products, many=True) 
+#         print("Serialized Product Data:", serializer.data)   
+#         return Response(serializer.data)
+
 
 class CustomProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-  
+
         current_user_usertype = request.user.usertypes
-  
-        products = CustomizedProduct.objects.filter(usertypes=current_user_usertype)  
-        print("Fetched Products:", products)     
-        serializer = CustomizedProductListSerializer(products, many=True) 
-        print("Serialized Product Data:", serializer.data)   
-        return Response(serializer.data)
+
+        queryset = CustomizedProduct.objects.filter(
+            usertypes=current_user_usertype
+        ).order_by('-id')
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CustomizedProductListSerializer
+            )
+
+        serializer = CustomizedProductListSerializer(queryset, many=True)
+
+        print("Fetched Products:", queryset)
+        print("Serialized Product Data:", serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
  
 class CustomizedProductUpdateView(APIView):
@@ -474,19 +644,50 @@ class UserCreateView(generics.CreateAPIView):
 
 
 
+# class UserListAPIView(generics.ListAPIView):
+#     queryset = User.objects.filter(is_staff=False)
+#     serializer_class = UserSerializer
+#     pagination_class = StandardPagination
+
+#     def get(self, request, *args, **kwargs):
+#         users = self.get_queryset()   
+#         print("Queryset:", users)   
+        
+#         serializer = self.get_serializer(users, many=True)
+#         print("serializer.data",serializer.data)
+#         return Response(serializer.data)  
+    
+
 class UserListAPIView(generics.ListAPIView):
     queryset = User.objects.filter(is_staff=False)
     serializer_class = UserSerializer
+    pagination_class = StandardPagination
 
     def get(self, request, *args, **kwargs):
-        users = self.get_queryset()   
-        print("Queryset:", users)   
-        
-        serializer = self.get_serializer(users, many=True)
-        print("serializer.data",serializer.data)
-        return Response(serializer.data)  
-    
 
+        queryset = self.get_queryset()
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "full_name",
+                "email",
+                "mobile_number",
+                "company_name",
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
    
  
 
@@ -1107,10 +1308,28 @@ class MediaDeleteView(APIView):
 
 
 
+# class MediaListView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         media_images = Media.objects.all()
+#         serializer = MediaSerializer(media_images, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class MediaListView(APIView):
     def get(self, request, *args, **kwargs):
-        media_images = Media.objects.all()
-        serializer = MediaSerializer(media_images, many=True)
+
+        queryset = Media.objects.all().order_by('-id')
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=MediaSerializer
+            )
+
+        serializer = MediaSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     
@@ -1278,8 +1497,6 @@ class CartItemDeleteAPIView(generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
- 
- 
  
 
 
@@ -1500,6 +1717,7 @@ class UserApprovedOrdersView(APIView):
         serializer = CustomizedOrderSerializer(pending_orders, many=True)
         
         return Response(serializer.data)
+    
 class  UserApprovedFullOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1603,9 +1821,39 @@ class ColorRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Color.objects.all()
     serializer_class = ColorupdateSerializer
     
+# class ColorListView(generics.ListAPIView):
+#     queryset = Color.objects.all()
+#     serializer_class = ColorSerializer
+
 class ColorListView(generics.ListAPIView):
-    queryset = Color.objects.all()
+    queryset = Color.objects.all().order_by('-id')
     serializer_class = ColorSerializer
+    pagination_class = StandardPagination
+
+    def get(self, request, *args, **kwargs):
+
+        queryset = self.get_queryset()
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "color",              
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     
     
  
@@ -1709,11 +1957,46 @@ class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializerss
 
 
+# class OrderPendingListView(generics.ListAPIView):
+#     serializer_class = OrderSerializerss
+
+#     def get_queryset(self):
+#         return Order.objects.filter(status='pending')
+
+
 class OrderPendingListView(generics.ListAPIView):
     serializer_class = OrderSerializerss
+    pagination_class = StandardPagination   
 
     def get_queryset(self):
-        return Order.objects.filter(status='pending')
+        return Order.objects.filter(status='pending').order_by('-id')
+
+    def get(self, request, *args, **kwargs):
+
+        queryset = self.get_queryset()
+
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                # "order_id",       
+                "user__company_name", 
+            )
+
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 class OrderItemsByOrderIdView(generics.ListAPIView):
@@ -1746,17 +2029,84 @@ class OrderAcceptOrderIdView(generics.ListAPIView):
             return Order.objects.filter(status='accepted')
 
 
+# class OrderCompleteListView(generics.ListAPIView):
+#     serializer_class = OrderSerializerss
+
+#     def get_queryset(self):
+#         return Order.objects.filter(status='delivered')
+
 class OrderCompleteListView(generics.ListAPIView):
     serializer_class = OrderSerializerss
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         return Order.objects.filter(status='delivered')
-    
+
+    def get(self, request, *args, **kwargs):
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        queryset = self.get_queryset()
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        # Normal (non-paginated) response
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+# class OrderAcceptedView(generics.ListAPIView):
+#     serializer_class = OrderSerializerss
+
+#     def get_queryset(self):
+#         return Order.objects.filter(status='accepted')
+
+
+
 class OrderAcceptedView(generics.ListAPIView):
     serializer_class = OrderSerializerss
+    pagination_class = StandardPagination
 
     def get_queryset(self):
-        return Order.objects.filter(status='accepted')
+        return Order.objects.filter(status='accepted').order_by('-id')
+
+    def get(self, request, *args, **kwargs):
+
+        queryset = self.get_queryset()
+
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "order_id",        
+                "customer_name",   
+                "product_name",    
+            )
+
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+
     
 class OrderUpdateAPIView(APIView):
     def patch(self, request, pk=None):
@@ -1817,11 +2167,43 @@ class DeleteOrderView(APIView):
  
 
 
+# class PendingOrdersView(APIView):
+#     def get(self, request):
+#         pending_orders = CustomizedOrder.objects.filter(status='pending')
+#         serializer = CustomizedOrderSerializer(pending_orders, many=True)
+#         return Response(serializer.data)
+
+
+
+
+
 class PendingOrdersView(APIView):
     def get(self, request):
-        pending_orders = CustomizedOrder.objects.filter(status='pending')
-        serializer = CustomizedOrderSerializer(pending_orders, many=True)
-        return Response(serializer.data)
+
+        queryset = CustomizedOrder.objects.filter(status='pending').order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "user__company_name",          
+                "product__SKU",     
+                "product__product_name",      
+            )
+
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CustomizedOrderSerializer
+            )
+
+        serializer = CustomizedOrderSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -1855,11 +2237,64 @@ class RejectOrderAPIView(APIView):
         serializer = CustomizedOrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-class  ApprovedOrdersView(APIView):
+# class  ApprovedOrdersView(APIView):
+#     def get(self, request):
+#         pending_orders = CustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
+#         serializer = CustomizedOrderSerializer(pending_orders, many=True)
+#         return Response(serializer.data)
+
+
+# class ApprovedOrdersView(APIView):
+#     def get(self, request):
+
+#         queryset = CustomizedOrder.objects.filter(
+#             status='approved'
+#         ).exclude(new_status='delivered').order_by('-id')
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=CustomizedOrderSerializer
+#             )
+
+#         serializer = CustomizedOrderSerializer(queryset, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class ApprovedOrdersView(APIView):
     def get(self, request):
-        pending_orders = CustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
-        serializer = CustomizedOrderSerializer(pending_orders, many=True)
-        return Response(serializer.data)
+
+        queryset = CustomizedOrder.objects.filter(
+            status='approved'
+        ).exclude(new_status='delivered').order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                # "order_id"
+                "user__company_name",
+                "product__SKU",
+                "product__product_name",
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CustomizedOrderSerializer
+            )
+
+        serializer = CustomizedOrderSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     
 
 
@@ -1918,12 +2353,59 @@ class DeleteCustomizedOrderView(APIView):
             return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         
+# class FullCustomizedOrderListAPIView(APIView):
+#     def get(self, request):
+     
+#         pending_orders = FullCustomizedOrder.objects.filter(status='pending')
+#         serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# class FullCustomizedOrderListAPIView(APIView):
+#     def get(self, request):
+
+#         queryset = FullCustomizedOrder.objects.filter(status='pending').order_by('-id')
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=FullCustomizedOrderListSerializer
+#             )
+
+#         serializer = FullCustomizedOrderListSerializer(queryset, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class FullCustomizedOrderListAPIView(APIView):
     def get(self, request):
-     
-        pending_orders = FullCustomizedOrder.objects.filter(status='pending')
-        serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
+
+        queryset = FullCustomizedOrder.objects.filter(status='pending').order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "size",              
+                "category__category_name",         
+                "user__company_name",          
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=FullCustomizedOrderListSerializer
+            )
+
+        serializer = FullCustomizedOrderListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
     
 class OrderFullApprovalView(APIView):
     def patch(self, request, pk):
@@ -1955,11 +2437,43 @@ class RejectFullOrderAPIView(APIView):
         serializer = FullCustomizedOrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-class  ApprovedFullOrdersView(APIView):
+# class  ApprovedFullOrdersView(APIView):
+#     def get(self, request):
+#         pending_orders = FullCustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
+#         serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
+#         return Response(serializer.data)
+
+
+class ApprovedFullOrdersView(APIView):
     def get(self, request):
-        pending_orders = FullCustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
-        serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
-        return Response(serializer.data)
+
+        queryset = FullCustomizedOrder.objects.filter(
+            status='approved'
+        ).exclude(new_status='delivered').order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "user__company_name",
+                "size",
+                "new_status",
+                "category__category_name",
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=FullCustomizedOrderListSerializer
+            )
+
+        serializer = FullCustomizedOrderListSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     
  
     
@@ -2032,7 +2546,7 @@ class UpdateOrderStatusView(APIView):
         serializer = CustomizedOrderSerializer(order, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            print("serializer.data",serializer.data)
+            print("serializer.data",serializer.data)    
             return Response(serializer.data, status=status.HTTP_200_OK)
         print("serializer.data",serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2204,17 +2718,87 @@ class ContactMessageAPIView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
+# class DeliveredOrdersView(APIView):
+#     def get(self, request, format=None): 
+#         delivered_orders = CustomizedOrder.objects.filter(new_status='delivered')   
+#         serializer = CustomizedOrderSerializer(delivered_orders, many=True)    
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class DeliveredOrdersView(APIView):
-    def get(self, request, format=None): 
-        delivered_orders = CustomizedOrder.objects.filter(new_status='delivered')   
-        serializer = CustomizedOrderSerializer(delivered_orders, many=True)    
+    def get(self, request, format=None):
+
+        queryset = CustomizedOrder.objects.filter(
+            new_status='delivered'
+        ).order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "user__company_name",     
+                "size",           
+                "category__category_name",  
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=CustomizedOrderSerializer
+            )
+        
+
+        serializer = CustomizedOrderSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+
+
+# class DeliveredFullOrdersView(APIView):
+#     def get(self, request, format=None):
+#         delivered_orders = FullCustomizedOrder.objects.filter(new_status='delivered')   
+#         serializer = FullCustomizedOrderListSerializer(delivered_orders, many=True)     
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+    
+
+
 class DeliveredFullOrdersView(APIView):
     def get(self, request, format=None):
-        delivered_orders = FullCustomizedOrder.objects.filter(new_status='delivered')   
-        serializer = FullCustomizedOrderListSerializer(delivered_orders, many=True)     
+
+        queryset = FullCustomizedOrder.objects.filter(
+            new_status='delivered'
+        ).order_by('-id')
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "user__company_name",
+                "size",
+                "category__category_name",
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=FullCustomizedOrderListSerializer
+            )
+
+        serializer = FullCustomizedOrderListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    
     
 class OrderStatusUpdateAPIView(APIView):
     def patch(self, request, order_id):
@@ -2230,6 +2814,7 @@ class OrderStatusUpdateAPIView(APIView):
 class UserCompleteOrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializerss
+    
 
     def get_queryset(self):
         user = self.request.user

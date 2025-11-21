@@ -14,6 +14,7 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
  
-DEBUG = True
+DEBUG = config('DEBUG',cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 AUTH_USER_MODEL = 'products.User' 
 
 
@@ -185,6 +186,7 @@ DATABASES = {
     }
 }
 
+DATABASES['default'] = dj_database_url.parse(config('DATABASES_URL'))
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
