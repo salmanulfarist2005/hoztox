@@ -183,24 +183,47 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
+
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_ALL_HEADERS = True
-CORS_ALLOW_ALL_METHODS = True
+
+
+
+
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://shop.caratreediamonds.com",
-    "https://master.d3btcpc72guulu.amplifyapp.com",
-    "https://main.d1c5fqrayqg473.amplifyapp.com",
-    "https://portal.caratreediamonds.com",
-    "https://hoztox-o4rf.onrender.com",
-    "https://fancy-pastelito-59a707.netlify.app"
-
+    "https://fancy-pastelito-59a707.netlify.app",
 ]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://hoztox-o4rf.onrender.com",     
+    "https://fancy-pastelito-59a707.netlify.app",  
+]
+
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"
 
 
 # Static files (CSS, JavaScript, Images)
