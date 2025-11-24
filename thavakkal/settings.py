@@ -197,16 +197,24 @@ CORS_ALLOWED_ORIGINS = [
     "https://master.d3btcpc72guulu.amplifyapp.com",
     "https://main.d1c5fqrayqg473.amplifyapp.com",
     "https://portal.caratreediamonds.com",
-    "https://hoztox-o4rf.onrender.com"
+    "https://hoztox-o4rf.onrender.com",
+    "https://fancy-pastelito-59a707.netlify.app"
+
 ]
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
