@@ -186,16 +186,11 @@ WSGI_APPLICATION = 'thavakkal.wsgi.application'
 #     }
 # }
 
-
 DATABASES = {
     'default': {}
 }
 
-# Overwrite using dj_database_url
-DATABASES['default'] = dj_database_url.parse(config('DATABASE_URL'))
-
-
-
+DATABASES['default'] = dj_database_url.parse(config('DATABASE_URL '))
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -237,8 +232,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://shop.caratreediamonds.com",
     "https://master.d3btcpc72guulu.amplifyapp.com",
     "https://main.d1c5fqrayqg473.amplifyapp.com",
-    "https://portal.caratreediamonds.com",
-    "https://hoztox-o4rf.onrender.com"
+    "https://portal.caratreediamonds.com"
     
    
 ]
