@@ -24,7 +24,8 @@ SECRET_KEY = config('SECRET_KEY')
  
 DEBUG = config('DEBUG',cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS  = ['*']
 AUTH_USER_MODEL = 'products.User' 
 
 
@@ -233,9 +234,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://master.d3btcpc72guulu.amplifyapp.com",
     "https://main.d1c5fqrayqg473.amplifyapp.com",
     "https://portal.caratreediamonds.com",
-    "https://hoztox-o4rf.onrender.com"
-    
-   
+    # "https://hoztox-o4rf.onrender.com",
+    "https://fancy-pastelito-59a707.netlify.app"
+ 
 ]
 
 # Static files (CSS, JavaScript, Images)
