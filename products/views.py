@@ -278,7 +278,8 @@ class ProductListView(APIView):
             )
 
         serializer = ProductSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)    
+        return Response(serializer.data, status=status.HTTP_200_OK)   
+     
 
 # class ProductuserListView(APIView):
 #     permission_classes = [IsAuthenticated]
@@ -290,12 +291,39 @@ class ProductListView(APIView):
 #         return Response(serializer.data)
 
 
+# class ProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+#         current_user_usertype = request.user.usertypes  
+#         queryset = Product.objects.filter(usertypes=current_user_usertype).order_by('-id')
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=ProductListSerializer
+#             )
+
+#         serializer = ProductListSerializer(queryset, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
 class ProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         current_user_usertype = request.user.usertypes  
-        queryset = Product.objects.filter(usertypes=current_user_usertype).order_by('-id')
+
+        queryset = Product.objects.filter(
+            usertypes=current_user_usertype
+        ).order_by('-id')
+
+        category_id = request.GET.get("category_id")
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
 
         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
 
@@ -310,6 +338,7 @@ class ProductuserListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
  
+
 class ProductUpdateView(APIView):
     def put(self, request, pk):
         try:
@@ -515,6 +544,36 @@ class CustomizedProductListView(APIView):
 #         return Response(serializer.data)
 
 
+
+# class CustomProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+
+#         current_user_usertype = request.user.usertypes
+
+#         queryset = CustomizedProduct.objects.filter(
+#             usertypes=current_user_usertype
+#         ).order_by('-id')
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=CustomizedProductListSerializer
+#             )
+
+#         serializer = CustomizedProductListSerializer(queryset, many=True)
+
+#         print("Fetched Products:", queryset)
+#         print("Serialized Product Data:", serializer.data)
+
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 class CustomProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -526,6 +585,10 @@ class CustomProductuserListView(APIView):
             usertypes=current_user_usertype
         ).order_by('-id')
 
+        category_id = request.GET.get("category_id")
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
+
         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
 
         if is_paginated:
@@ -536,9 +599,6 @@ class CustomProductuserListView(APIView):
             )
 
         serializer = CustomizedProductListSerializer(queryset, many=True)
-
-        print("Fetched Products:", queryset)
-        print("Serialized Product Data:", serializer.data)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1596,7 +1656,11 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         self.object = self.get_object()
-        serializer = self.update_serializer_class(self.object, data=request.data)
+        serializer = self.update_serializer_class(
+            self.object, 
+            data=request.data,
+            partial=True   
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

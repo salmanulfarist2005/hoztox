@@ -22,13 +22,23 @@ class ProductMultipleImagesSerializer(serializers.ModelSerializer):
  
 
 class ProductSerializer(serializers.ModelSerializer):
-    usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all(), many=True)
-    additional_images = ProductMultipleImagesSerializer(many=True, required=False) 
-   
+    usertypes = serializers.PrimaryKeyRelatedField(
+        queryset=UserType.objects.all(), 
+        many=True
+    )
+    additional_images = ProductMultipleImagesSerializer(many=True, required=False)
 
     class Meta:
-        model = Product  
-        fields =  '__all__'
+        model = Product
+        fields = '__all__'
+
+    def validate_sku(self, value):
+        product_id = self.instance.id if self.instance else None
+
+        if Product.objects.filter(SKU=value).exclude(id=product_id).exists():
+            raise serializers.ValidationError("SKU already exists.")
+
+        return value
 
 
 class ProductCartSerializer(serializers.ModelSerializer):
@@ -125,7 +135,28 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True},
+
         }
+
+
+    def validate_full_name(self, value):
+        if value and len(value.strip()) < 3:
+            raise serializers.ValidationError("Full name must be at least 3 characters long.")
+        return value
+
+    def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Email is required.")
+        
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered.")
+        
+        return value
+    
+    def validate_username(self, value):
+        if value and User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
 
     def create(self, validated_data):
         confirm_password = validated_data.pop('confirm_password', None)
