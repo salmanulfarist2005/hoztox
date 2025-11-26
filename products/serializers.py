@@ -28,9 +28,14 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     additional_images = ProductMultipleImagesSerializer(many=True, required=False)
 
+    category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = '__all__'  
+
+    def get_category_name(self, obj):
+        return obj.category.category_name if obj.category else None
 
     def validate_sku(self, value):
         product_id = self.instance.id if self.instance else None
@@ -39,7 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("SKU already exists.")
 
         return value
-
+    
 
 class ProductCartSerializer(serializers.ModelSerializer):
     usertypes = serializers.PrimaryKeyRelatedField(queryset=UserType.objects.all(), many=True)
@@ -258,10 +263,10 @@ class CartSerializer(serializers.ModelSerializer):
         except Product.DoesNotExist:
             raise serializers.ValidationError("Product does not exist.")
 
-        gross_weight = product.gross_weight * quantity
+        gross_weight = (product.gross_weight or 0) * quantity
         diamond_weight = (product.diamond_weight or 0) * quantity
-        colour_stones = product.colour_stones * quantity
-        net_weight = product.net_weight * quantity
+        colour_stones = (product.colour_stones or 0 )* quantity
+        net_weight = (product.net_weight or 0 ) * quantity
 
         cart = Cart(
             user=validated_data.get('user'),
@@ -359,45 +364,49 @@ class OrderSerializer(serializers.ModelSerializer):
         fields =  '__all__'
         extra_kwargs = {'user': {'read_only': True}}
 
-    def create(self, validated_data):
-        order_items_data = validated_data.pop('order_items')
-        order = Order.objects.create(**validated_data)
+def create(self, validated_data):
+    order_items_data = validated_data.pop('order_items')
+    order = Order.objects.create(**validated_data)
 
-        total_gross_weight = Decimal(0.00)
-        total_diamond_weight = Decimal(0.00)
-        total_colour_stones = Decimal(0.00)
-        total_net_weight = Decimal(0.00)
+    total_gross_weight = Decimal(0)
+    total_diamond_weight = Decimal(0)
+    total_colour_stones = Decimal(0)
+    total_net_weight = Decimal(0)
 
-        for item_data in order_items_data:
-            sku = item_data.pop('product')   
-            try:
-                product = Product.objects.get(SKU=sku) 
-            except Product.DoesNotExist:
-                raise serializers.ValidationError({"product": "Product does not exist."})
+    for item_data in order_items_data:
+        sku = item_data.pop('product')
 
-           
-            try:
-                colour_stones_value = Decimal(product.colour_stones) if product.colour_stones else Decimal(0.00)
-            except InvalidOperation:
-                raise serializers.ValidationError({"colour_stones": "Invalid colour stones value."})
+        try:
+            product = Product.objects.get(SKU=sku)
+        except Product.DoesNotExist:
+            raise serializers.ValidationError({"product": "Product does not exist."})
 
-           
-            total_gross_weight += product.gross_weight * Decimal(item_data['quantity'])
-            total_diamond_weight += product.diamond_weight * Decimal(item_data['quantity'])
-            total_colour_stones += colour_stones_value * Decimal(item_data['quantity'])
-            total_net_weight += product.net_weight * Decimal(item_data['quantity'])
+        quantity = Decimal(item_data['quantity'])
 
-         
-            OrderItem.objects.create(order=order, product=product, **item_data)
+        # SAFE values (convert None → 0)
+        gross_weight = Decimal(product.gross_weight or 0)
+        diamond_weight = Decimal(product.diamond_weight or 0)
+        colour_stones = Decimal(product.colour_stones or 0)
+        net_weight = Decimal(product.net_weight or 0)
 
-        
-        order.total_gross_weight = total_gross_weight
-        order.total_diamond_weight = total_diamond_weight
-        order.total_colour_stones = total_colour_stones
-        order.total_net_weight = total_net_weight
-        order.save()  
+        # Calculations
+        total_gross_weight += gross_weight * quantity
+        total_diamond_weight += diamond_weight * quantity
+        total_colour_stones += colour_stones * quantity
+        total_net_weight += net_weight * quantity
 
-        return order
+        # Save item
+        OrderItem.objects.create(order=order, product=product, **item_data)
+
+    # Save totals
+    order.total_gross_weight = total_gross_weight
+    order.total_diamond_weight = total_diamond_weight
+    order.total_colour_stones = total_colour_stones
+    order.total_net_weight = total_net_weight
+    order.save()
+
+    return order
+    
 class UserGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

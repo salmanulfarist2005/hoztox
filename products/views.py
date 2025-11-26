@@ -836,9 +836,7 @@ class ChangePasswordView(APIView):
             return Response({'error': 'Passwords do not match.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-      
         admin_users = User.objects.filter(is_staff=True, is_superuser=True)
-
         if not admin_users.exists():
             return Response({'error': 'No admin users found.'},
                             status=status.HTTP_404_NOT_FOUND)
@@ -859,9 +857,7 @@ class ChangePasswordView(APIView):
             admin_user.save()
 
         return Response({'message': 'Password changed successfully for all admin users.'},
-                        status=status.HTTP_200_OK)
-
-
+        status=status.HTTP_200_OK)
 
 
 
@@ -1493,10 +1489,10 @@ class AddToCartView(generics.CreateAPIView):
 
             product = Product.objects.get(id=product_id)
 
-            existing_item.gross_weight = product.gross_weight * existing_item.quantity
+            existing_item.gross_weight = (product.gross_weight or 0) * existing_item.quantity
             existing_item.diamond_weight = (product.diamond_weight or 0) * existing_item.quantity
-            existing_item.colour_stones = product.colour_stones * existing_item.quantity
-            existing_item.net_weight = product.net_weight * existing_item.quantity
+            existing_item.colour_stones = (product.colour_stones or 0) * existing_item.quantity
+            existing_item.net_weight = (product.net_weight or 0) * existing_item.quantity
             existing_item.color = color  
 
             existing_item.save()
@@ -1696,10 +1692,10 @@ class UpdateCartQuantityView(APIView):
 
         cart_item.quantity = quantity
         cart_item.color = color
-        cart_item.gross_weight = cart_item.product.gross_weight * quantity
+        cart_item.gross_weight = (cart_item.product.gross_weight or 0) * quantity
         cart_item.diamond_weight = (cart_item.product.diamond_weight or 0) * quantity
-        cart_item.colour_stones = cart_item.product.colour_stones * quantity
-        cart_item.net_weight = cart_item.product.net_weight * quantity
+        cart_item.colour_stones = (cart_item.product.colour_stones or 0) * quantity
+        cart_item.net_weight = (cart_item.product.net_weight or 0) * quantity
         cart_item.save()
 
         serializer = CartSerializer(cart_item)
@@ -2185,6 +2181,7 @@ class OrderUpdateAPIView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
 class OrderUpdateAPIView(APIView):
     def patch(self, request, pk):
   
@@ -2195,11 +2192,9 @@ class OrderUpdateAPIView(APIView):
 
         print("Received data:", request.data)   
         
-   
         ordercode = request.data.get('ordercode', order.ordercode)
         order.ordercode = ordercode
         order.save()   
-
     
         order_items_data = request.data.get('order_items', [])
         for item_data in order_items_data:
@@ -2229,15 +2224,11 @@ class DeleteOrderView(APIView):
         return Response({"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
     
  
-
-
 # class PendingOrdersView(APIView):
 #     def get(self, request):
 #         pending_orders = CustomizedOrder.objects.filter(status='pending')
 #         serializer = CustomizedOrderSerializer(pending_orders, many=True)
 #         return Response(serializer.data)
-
-
 
 
 
@@ -2287,6 +2278,9 @@ class OrderApprovalView(APIView):
             return Response({"message": "Order status updated successfully."}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid data."}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
 class RejectOrderAPIView(APIView):
     def patch(self, request, pk):
         try:
@@ -2828,8 +2822,6 @@ class DeliveredOrdersView(APIView):
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
-    
 
 
 class DeliveredFullOrdersView(APIView):
