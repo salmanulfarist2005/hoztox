@@ -197,6 +197,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields =  '__all__'
+        
+        read_only_fields = ['is_active']
+
 
     def validate_email(self, value):
         if self.instance and value != self.instance.email:
