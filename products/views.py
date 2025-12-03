@@ -114,6 +114,7 @@ class CategoryCreateAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
 # class CategoryListAPIView(APIView):
 #     def get(self, request, *args, **kwargs):
 #         categories = Category.objects.all().order_by('id')
@@ -145,6 +146,7 @@ class CategoryListAPIView(APIView):
 
         serializer = CategorySerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 class CategoryDetailAPIView(APIView):
     def get_object(self, id):
@@ -186,17 +188,12 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductListSerializer
     
-    
-    
- 
-
-
 
 class ProductListCreateView(APIView):
     def post(self, request):
         print("Request Data:", request.data)
 
-       
+
         if Product.objects.filter(SKU=request.data.get('SKU').strip()).exists():
             return Response({"error": "Product with this SKU already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -235,8 +232,6 @@ class ProductListCreateView(APIView):
  
         print("Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 # class ProductListView(APIView):
@@ -432,7 +427,7 @@ class ProductDeleteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     
-    #***************************************************************************************************************************************
+    #\\\\\\\*************************************************************************************************************************************************///////
     
     
     
@@ -530,6 +525,9 @@ class CustomizedProductListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)    
 
 
+
+
+
 # class CustomProductuserListView(APIView):
 #     permission_classes = [IsAuthenticated]
 
@@ -574,12 +572,13 @@ class CustomizedProductListView(APIView):
 
 
 
+
 class CustomProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
 
         current_user_usertype = request.user.usertypes
-        
+
         queryset = CustomizedProduct.objects.filter(
             usertypes=current_user_usertype
         ).order_by('-id')
@@ -1451,7 +1450,6 @@ class ProductDetailView(APIView):
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
  
 
-
  
 
 class ProductSKUDetailView(APIView):
@@ -1506,7 +1504,7 @@ class AddToCartView(generics.CreateAPIView):
 
 
     
-    
+
 class CartItemsView(generics.ListAPIView):
     serializer_class = CartGetSerializer
     permission_classes = [IsAuthenticated]
@@ -1538,7 +1536,7 @@ class CartItemDeleteAPIView(generics.DestroyAPIView):
         cart_items = self.get_queryset().filter(product__SKU=sku)
 
         if not cart_items.exists():
-            return Response(status=status.HTTP_404_NOT_FOUND)  # 
+            return Response(status=status.HTTP_404_NOT_FOUND)  
         
       
         deleted_count, _ = cart_items.delete()
@@ -1550,8 +1548,6 @@ class CartItemDeleteAPIView(generics.DestroyAPIView):
 
 
  
-
-
 
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
@@ -1659,9 +1655,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
- 
-
-
 
 class UpdateCartQuantityView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1696,8 +1689,6 @@ class UpdateCartQuantityView(APIView):
 
         serializer = CartSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
 
 
@@ -1773,6 +1764,7 @@ class UserApprovedOrdersView(APIView):
         serializer = CustomizedOrderSerializer(pending_orders, many=True)
         
         return Response(serializer.data)
+    
     
 class  UserApprovedFullOrdersView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2068,6 +2060,121 @@ class OrderItemsByOrderIdView(generics.ListAPIView):
         else:
 
             return Order.objects.filter(status='pending')
+        
+#new viwess
+class OrderItemListByOrderIdView(generics.ListAPIView):
+    serializer_class = OrderItemListSerializer  
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        order_id = self.kwargs.get("order_id")
+
+        queryset = OrderItem.objects.all().order_by("-id")
+
+        if order_id:
+            queryset = queryset.filter(order_id=order_id)
+
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product__product_name",
+                "product__sku",
+                "order__user__company_name",
+            )
+
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=self.get_serializer_class()
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+
+
+#csv download new view
+import csv
+from django.http import HttpResponse
+
+class OrderItemsCSVDownloadView(APIView):
+
+    def get_queryset(self, request, order_id):
+        queryset = OrderItem.objects.all().order_by("-id")
+
+        if order_id:
+            queryset = queryset.filter(order_id=order_id)
+
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product__product_name",
+                "product__sku",
+                "order__user__company_name",
+            )
+
+        return queryset
+
+    def get(self, request, order_id):
+        queryset = self.get_queryset(request, order_id)
+
+        if not queryset.exists():
+            return HttpResponse("No matching items found.", status=404)
+
+        # Setup CSV
+        response = HttpResponse(content_type="text/csv")
+        response['Content-Disposition'] = f'attachment; filename="order_{order_id}_items.csv"'
+
+        writer = csv.writer(response)
+
+        # CSV Header
+        writer.writerow([
+            "Order Code",
+            "Status",
+            "Product Name",
+            "SKU",
+            "Category",
+            "Quantity",
+            "Gross Weight",
+            "Net Weight",
+            "Diamond Weight",
+            "Colour Stones",
+            "Company Name",
+            "User Email",
+        ])
+
+        # CSV Rows
+        for item in queryset:
+            writer.writerow([
+                item.order.ordercode if item.order else "N/A",
+                item.order.status if item.order else "N/A",
+                item.product.product_name if item.product else "N/A",
+                item.product.SKU if item.product else "N/A",
+                item.product.category.category_name if item.product and item.product.category else "N/A",
+                item.quantity,
+                item.product.gross_weight if item.product else "N/A",
+                item.product.net_weight if item.product else "N/A",
+                item.product.diamond_weight if item.product else "N/A",
+                item.product.colour_stones if item.product else "N/A",
+                item.order.user.company_name if item.order and item.order.user else "N/A",
+                item.order.user.email if item.order and item.order.user else "N/A",
+            ])
+
+        return response
+
+
 
 
 class OrderAcceptOrderIdView(generics.ListAPIView):
@@ -2090,6 +2197,7 @@ class OrderAcceptOrderIdView(generics.ListAPIView):
 
 #     def get_queryset(self):
 #         return Order.objects.filter(status='delivered')
+
 
 class OrderCompleteListView(generics.ListAPIView):
     serializer_class = OrderSerializerss
@@ -2178,6 +2286,7 @@ class OrderUpdateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+
 class OrderUpdateAPIView(APIView):
     def patch(self, request, pk):
   
@@ -2258,6 +2367,7 @@ class PendingOrdersView(APIView):
 
 
 
+
 class OrderApprovalView(APIView):
     def patch(self, request, pk):
         try:
@@ -2277,6 +2387,8 @@ class OrderApprovalView(APIView):
         
 
 
+
+
 class RejectOrderAPIView(APIView):
     def patch(self, request, pk):
         try:
@@ -2290,6 +2402,7 @@ class RejectOrderAPIView(APIView):
 
         serializer = CustomizedOrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
     
 # class  ApprovedOrdersView(APIView):
 #     def get(self, request):
@@ -2736,7 +2849,6 @@ class StatusFullCSVUploadView(APIView):
                 print(f"Failed to update order {order_id}: {str(e)}")
                 return Response({'error': f'Failed to update order {order_id}: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
- 
         response_data = {}
         if updated_orders:
             response_data['success'] = f'Updated statuses for orders: {updated_orders}'
@@ -2899,7 +3011,8 @@ class UserCompleteApprovedOrdersView(APIView):
         serializer = CustomizedOrderSerializer(pending_orders, many=True)      
         return Response(serializer.data)
     
-    
+
+
 class  UserCompleteApprovedFullOrdersView(APIView):   
     permission_classes = [IsAuthenticated]
     def get(self, request):   

@@ -8,10 +8,26 @@ class UserTypeSerializer(serializers.ModelSerializer):
         model = UserType
         fields =  '__all__'
         
+# class CategorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Category
+#         fields =  '__all__' 
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields =  '__all__' 
+        fields = '__all__'
+
+    def validate_category_name(self, value):
+        qs = Category.objects.filter(category_name__iexact=value)
+
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+
+        if qs.exists():
+            raise serializers.ValidationError("Category name already exists.")
+        return value
         
         
 class ProductMultipleImagesSerializer(serializers.ModelSerializer):
@@ -433,8 +449,32 @@ class OrderSerializerss(serializers.ModelSerializer):
         fields =  '__all__'
         extra_kwargs = {'user': {'read_only': True}}
 
-      
+        
+#iiiiiiiiiiiiiiiiiiiii
+class OrderSerializerssslist(serializers.ModelSerializer):
 
+    class Meta:
+        model = Order
+        fields =  '__all__' 
+
+
+#new serializer
+class productnamesSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.category_name', read_only=True)
+    class Meta:
+        model = Product
+        fields = ['id', 'SKU', 'product_name','category_name']
+
+
+#iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+class OrderItemListSerializer(serializers.ModelSerializer):
+    order = OrderSerializerssslist(read_only=True)
+    product = productnamesSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
+        depth = 1
 
 
 
@@ -445,17 +485,26 @@ class ColorSerializer(serializers.ModelSerializer):
         
  
 
+# class CustomizedOrderSerializer(serializers.ModelSerializer):
+#     product = CustomizedProductOrderSerializer(read_only=True)  
+#     color = ColorSerializer(read_only=True)       
+#     user = UserSerializer(read_only=True)       
+
+#     class Meta:
+#         model = CustomizedOrder
+#         fields = '__all__'
+      
+   
 class CustomizedOrderSerializer(serializers.ModelSerializer):
     product = CustomizedProductOrderSerializer(read_only=True)  
     color = ColorSerializer(read_only=True)       
-    user = UserSerializer(read_only=True)       
+    user = UserSerializer(read_only=True)
+
+    category_name = serializers.CharField(source='category.category_name', read_only=True)
 
     class Meta:
         model = CustomizedOrder
         fields = '__all__'
-      
-   
- 
 
 
 

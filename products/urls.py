@@ -49,12 +49,10 @@ urlpatterns = [
    # admin login
    path('login/', AdminLoginView.as_view(), name='admin-login'),
 
-  
    # media
    path('upload-media/', MediaUploadView.as_view(), name='upload-media'),  
    path('media/images/', MediaListView.as_view(), name='media-images-list'),
    path('media/images/<int:pk>/', MediaDeleteView.as_view(), name='media-delete'),
-
    # cart
    path('cart/add/', AddToCartView.as_view(), name='add-to-cart'), 
    path('cart/items/', CartItemListView.as_view(), name='cart-items'),   
@@ -66,13 +64,11 @@ urlpatterns = [
   #  contact
    path('contact/', ContactMessageAPIView.as_view(), name='contact-form'),
 
- 
    # colours
    path('colors/', ColorListCreate.as_view(), name='color-list-create'),
    path('colors/<int:pk>/', ColorRetrieveUpdateDestroy.as_view(), name='color-detail'),
    path('colors_list/', ColorListView.as_view(), name='color-list'),
    
-    
    # orders
    path('orders/', OrderCreateView.as_view(), name='order-create'),  
    path('my-orders/', UserOrderListView.as_view(), name='user-order-list'),
@@ -100,13 +96,21 @@ urlpatterns = [
    path('custom-full-orders/<int:order_id>/delete/', DeleteFullCustomizedOrderView.as_view(), name='delete_custom_order'),
    path('orders/<int:order_id>/update-status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
    path('full-orders/<int:order_id>/update-status/', UpdateFullOrderStatusView.as_view(), name='update-order-status'),
+
    path('status/upload-csv/', StatusCSVUploadView.as_view(), name='upload_csv'),
-   path('full-status/upload-csv/', StatusFullCSVUploadView.as_view(), name='upload_csv'),   
+   path('full-status/upload-csv/', StatusFullCSVUploadView.as_view(), name='upload_csv'),
+      
    path('delivered-orders/', DeliveredOrdersView.as_view(), name='delivered_orders_api'),
    path('full-delivered-orders/', DeliveredFullOrdersView.as_view(), name='delivered_orders_api'),
    path('order/<int:order_id>/update-status/', OrderStatusUpdateAPIView.as_view(), name='order_status_update'),
    path('orders/pending/', OrderPendingListView.as_view(), name='pending_orders'),
    path('orders/<int:order_id>/', OrderItemsByOrderIdView.as_view(), name='order-items-by-id'),
+   path('orders/<int:order_id>/download/', OrderItemsCSVDownloadView.as_view(), name='order-items-download'),
+   path("orders/<int:order_id>/items/", OrderItemListByOrderIdView.as_view()),
+
+
+
+
    path('accept-orders/<int:order_id>/', OrderAcceptOrderIdView.as_view(), name='order-items-by-id'),
    
    path('orders/delivered/', OrderCompleteListView.as_view(), name='pending_orders'),
