@@ -25,6 +25,7 @@ logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler() 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
+from products.utils import get_paginated_response, apply_search
 logger.addHandler(handler)
 from rest_framework import generics, permissions, status
 from django.core.mail import send_mail
@@ -242,7 +243,6 @@ class ProductListCreateView(APIView):
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-from products.utils import get_paginated_response, apply_search
 
 class ProductListView(APIView):
 
@@ -306,6 +306,33 @@ class ProductListView(APIView):
 #         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+# class ProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+#         current_user_usertype = request.user.usertypes  
+
+#         queryset = Product.objects.filter(
+#             usertypes=current_user_usertype
+#         ).order_by('-id')
+
+#         category_id = request.GET.get("category_id")
+#         if category_id:
+#             queryset = queryset.filter(category__id=category_id)
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=ProductListSerializer
+#             )
+
+#         serializer = ProductListSerializer(queryset, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class ProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -316,12 +343,21 @@ class ProductuserListView(APIView):
             usertypes=current_user_usertype
         ).order_by('-id')
 
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product_name",
+                "SKU",
+                "category__category_name",
+            )
+
         category_id = request.GET.get("category_id")
         if category_id:
             queryset = queryset.filter(category__id=category_id)
 
         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
         if is_paginated:
             return get_paginated_response(
                 request=request,
@@ -332,7 +368,13 @@ class ProductuserListView(APIView):
         serializer = ProductListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
- 
+
+
+
+
+
+
+
 
 class ProductUpdateView(APIView):
     def put(self, request, pk):
