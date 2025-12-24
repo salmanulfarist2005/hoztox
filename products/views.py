@@ -615,22 +615,60 @@ class CustomizedProductListView(APIView):
 
 
 
+# class CustomProductuserListView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     def get(self, request, *args, **kwargs):
+
+#         current_user_usertype = request.user.usertypes
+
+#         queryset = CustomizedProduct.objects.filter(
+#             usertypes=current_user_usertype
+#         ).order_by('-id')
+
+#         category_id = request.GET.get("category_id")
+#         if category_id:
+#             queryset = queryset.filter(category__id=category_id)
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=CustomizedProductListSerializer
+#             )
+
+#         serializer = CustomizedProductListSerializer(queryset, many=True)
+
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 class CustomProductuserListView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, *args, **kwargs):
 
+    def get(self, request, *args, **kwargs):
         current_user_usertype = request.user.usertypes
 
         queryset = CustomizedProduct.objects.filter(
             usertypes=current_user_usertype
         ).order_by('-id')
 
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product_name",
+                "SKU",
+                "category__category_name",
+            )
+
         category_id = request.GET.get("category_id")
         if category_id:
             queryset = queryset.filter(category__id=category_id)
 
         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
         if is_paginated:
             return get_paginated_response(
                 request=request,
@@ -639,8 +677,9 @@ class CustomProductuserListView(APIView):
             )
 
         serializer = CustomizedProductListSerializer(queryset, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
  
 class CustomizedProductUpdateView(APIView):
