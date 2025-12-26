@@ -5,6 +5,11 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import os
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
@@ -41,6 +46,8 @@ from rest_framework import status
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import csv
+from django.db.models.functions import Replace, Lower
+from django.db.models import Value
 import os
 from .models import Product, Category, UserType, Media
 from .serializers import MediaSerializer
@@ -53,20 +60,6 @@ class UserTypeListCreateView(generics.ListCreateAPIView):
     serializer_class = UserTypeSerializer
 
 
-
-# class UserTypeListView(generics.ListAPIView):
-#     queryset = UserType.objects.all()
-#     serializer_class = UserTypeSerializer
-
-#     def list(self, request, *args, **kwargs):
-     
-#         response = super().list(request, *args, **kwargs)
-        
- 
-#         print("Response Data:", response.data)   
-        
-   
-#         return response
 
 
 class UserTypeListView(generics.ListAPIView):
@@ -116,11 +109,6 @@ class CategoryCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-# class CategoryListAPIView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         categories = Category.objects.all().order_by('id')
-#         serializer = CategorySerializer(categories, many=True)
-#         return Response(serializer.data)
 
 
 class CategoryListAPIView(APIView):
@@ -235,12 +223,6 @@ class ProductListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class ProductListView(APIView):
-#     def get(self, request):
-#         products = Product.objects.all()
-#         serializer = ProductListSerializer(products, many=True)
-      
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -276,61 +258,6 @@ class ProductListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)   
      
 
-# class ProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, *args, **kwargs):      
-#         current_user_usertype = request.user.usertypes  
-#         products = Product.objects.filter(usertypes=current_user_usertype)      
-#         serializer = ProductListSerializer(products, many=True)    
-#         return Response(serializer.data)
-
-
-# class ProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, *args, **kwargs):
-#         current_user_usertype = request.user.usertypes  
-#         queryset = Product.objects.filter(usertypes=current_user_usertype).order_by('-id')
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=ProductListSerializer
-#             )
-
-#         serializer = ProductListSerializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
-# class ProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, *args, **kwargs):
-#         current_user_usertype = request.user.usertypes  
-
-#         queryset = Product.objects.filter(
-#             usertypes=current_user_usertype
-#         ).order_by('-id')
-
-#         category_id = request.GET.get("category_id")
-#         if category_id:
-#             queryset = queryset.filter(category__id=category_id)
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=ProductListSerializer
-#             )
-
-#         serializer = ProductListSerializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ProductuserListView(APIView):
@@ -367,10 +294,6 @@ class ProductuserListView(APIView):
 
         serializer = ProductListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
 
 
 
@@ -528,13 +451,6 @@ class CustomizedProductListCreateView(APIView):
 
 
 
-
-# class CustomizedProductListView(APIView):
-#     def get(self, request):
-#         products = CustomizedProduct.objects.all()
-#         serializer = CustomizedProductListSerializer(products, many=True)
-#         print("serializer.data",serializer.data)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
  
 
 
@@ -567,80 +483,6 @@ class CustomizedProductListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)    
 
 
-
-
-
-# class CustomProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, *args, **kwargs):
-  
-#         current_user_usertype = request.user.usertypes
-  
-#         products = CustomizedProduct.objects.filter(usertypes=current_user_usertype)  
-#         print("Fetched Products:", products)     
-#         serializer = CustomizedProductListSerializer(products, many=True) 
-#         print("Serialized Product Data:", serializer.data)   
-#         return Response(serializer.data)
-
-
-
-# class CustomProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, *args, **kwargs):
-
-#         current_user_usertype = request.user.usertypes
-
-#         queryset = CustomizedProduct.objects.filter(
-#             usertypes=current_user_usertype
-#         ).order_by('-id')
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=CustomizedProductListSerializer
-#             )
-
-#         serializer = CustomizedProductListSerializer(queryset, many=True)
-
-#         print("Fetched Products:", queryset)
-#         print("Serialized Product Data:", serializer.data)
-
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
-# class CustomProductuserListView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     def get(self, request, *args, **kwargs):
-
-#         current_user_usertype = request.user.usertypes
-
-#         queryset = CustomizedProduct.objects.filter(
-#             usertypes=current_user_usertype
-#         ).order_by('-id')
-
-#         category_id = request.GET.get("category_id")
-#         if category_id:
-#             queryset = queryset.filter(category__id=category_id)
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=CustomizedProductListSerializer
-#             )
-
-#         serializer = CustomizedProductListSerializer(queryset, many=True)
-
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -780,21 +622,6 @@ class UserCreateView(generics.CreateAPIView):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-
-
-# class UserListAPIView(generics.ListAPIView):
-#     queryset = User.objects.filter(is_staff=False)
-#     serializer_class = UserSerializer
-#     pagination_class = StandardPagination
-
-#     def get(self, request, *args, **kwargs):
-#         users = self.get_queryset()   
-#         print("Queryset:", users)   
-        
-#         serializer = self.get_serializer(users, many=True)
-#         print("serializer.data",serializer.data)
-#         return Response(serializer.data)  
     
 
 class UserListAPIView(generics.ListAPIView):
@@ -828,6 +655,7 @@ class UserListAPIView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
    
+ 
  
 
 class UserUpdateAPIView(generics.UpdateAPIView):
@@ -870,8 +698,6 @@ class UserDeleteView(generics.DestroyAPIView):
     
 
  
-
-
 
 class AdminLoginView(APIView):
     def post(self, request, *args, **kwargs):
@@ -937,8 +763,7 @@ class ChangePasswordView(APIView):
 
 
 
-from django.db.models.functions import Replace, Lower
-from django.db.models import Value
+
 
 class MediaUploadView(APIView):
     def post(self, request, *args, **kwargs):
@@ -952,13 +777,11 @@ class MediaUploadView(APIView):
         for image in images:
             file_path = image.name
             
-            # Check for products already using this image path
             products_with_this_image = Product.objects.filter(
                 models.Q(product_image=file_path) | 
                 models.Q(product_image=f'media/{file_path}')
             )
             
-            # Delete existing file and media records if they exist
             if default_storage.exists(file_path):
                 default_storage.delete(file_path)
                 Media.objects.filter(
@@ -966,7 +789,6 @@ class MediaUploadView(APIView):
                     models.Q(image=f'media/{file_path}')
                 ).delete()
             
-            # Save the new image
             saved_path = default_storage.save(file_path, ContentFile(image.read()))
             
             print(f"Original filename: {image.name}")
@@ -981,13 +803,11 @@ class MediaUploadView(APIView):
             
             media_objects.append(media_instance)
             
-            # Update products that were using this image path
             for product in products_with_this_image:
                 product.product_image = saved_path
                 product.save()
                 print(f"Updated existing product {product.SKU} with image: {saved_path}")
             
-            # Match products by normalized SKU
             filename_without_ext = os.path.splitext(image.name)[0]
             normalized_filename = filename_without_ext.replace(" ", "").replace("_", "").replace("-", "").lower()
             
@@ -1027,7 +847,6 @@ class ProductCSVUploadView(APIView):
         if not csv_file:
             return Response({"error": "No file uploaded. Please upload a CSV file."}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Log media records before processing
         media_count_before = Media.objects.count()
         print(f"[ProductCSVUploadView] Media records before processing: {media_count_before}")
         
@@ -1054,26 +873,21 @@ class ProductCSVUploadView(APIView):
                 
                 for row_num, row in enumerate(reader, start=2):
                     try:
-                        # Validate required fields
                         required_fields = ['SKU', 'product_name', 'category', 'gross_weight', 'net_weight']
                         for field in required_fields:
                             if not row.get(field):
                                 raise ValueError(f"Field '{field}' is required but missing or empty in row {row_num}.")
                         
-                        # Get or create category
                         category_name = row['category']
                         category, _ = Category.objects.get_or_create(category_name=category_name)
                         
-                        # Check if product exists (case insensitive)
                         sku = row['SKU'].strip()
                         existing_product = Product.objects.filter(SKU__iexact=sku).first()
                         
-                        # Find matching image
                         image_path = self.find_product_image(sku)
                         print(f"[ProductCSVUploadView] Image path for SKU {sku}: {image_path}")
                         
                         if existing_product:
-                            # Update existing product
                             existing_product.SKU = sku
                             existing_product.product_name = row['product_name']
                             existing_product.category = category
@@ -1094,7 +908,6 @@ class ProductCSVUploadView(APIView):
                             products_updated += 1
                             print(f"[ProductCSVUploadView] Updated product SKU: {sku} with image: {image_path}")
                         else:
-                            # Create new product
                             product = Product.objects.create(
                                 SKU=sku,
                                 product_name=row['product_name'],
@@ -1122,7 +935,6 @@ class ProductCSVUploadView(APIView):
                         errors.append(f"Row {row_num}: Unexpected error - {str(e)}")
                         continue
             
-            # Log media records after processing
             media_count_after = Media.objects.count()
             print(f"[ProductCSVUploadView] Media records after processing: {media_count_after}")
             if media_count_before != media_count_after:
@@ -1148,6 +960,7 @@ class ProductCSVUploadView(APIView):
                 default_storage.delete(file_path)
             return Response({"error": f"Failed to process the uploaded file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    
     def find_product_image(self, sku):
         """
         Find the best matching image for a given SKU.
@@ -1155,13 +968,11 @@ class ProductCSVUploadView(APIView):
         """
         print(f"[find_product_image] Finding image for SKU: {sku}")
         
-        # Check Media model first
         media_image = self.find_image_in_media_model(sku)
         if media_image:
             print(f"[find_product_image] Returning media image: {media_image}")
             return media_image
         
-        # Fallback to filesystem (optional, can be removed if not needed)
         print("[find_product_image] No image found in Media model, checking filesystem")
         normalized_sku = sku.lower().replace(" ", "").replace("_", "").replace("-", "")
         extensions = ['.jpg', '.jpeg', '.png', '.webp']
@@ -1210,6 +1021,9 @@ class ProductCSVUploadView(APIView):
         
         print(f"[find_image_in_media_model] No matching image found for SKU: {sku}")
         return None
+    
+    
+    
 class MediaDeleteView(APIView):
     def delete(self, request, pk):
         try:
@@ -1220,44 +1034,37 @@ class MediaDeleteView(APIView):
             image_name = None
             
             if image_path:
-                # Extract filename from path
                 image_name = os.path.basename(image_path)
                 
-                # Find and clear product_image field for products that reference this image
                 products_with_this_image = Product.objects.filter(product_image=image_path)
                 products_updated_by_reference = products_with_this_image.count()
                 products_with_this_image.update(product_image=None)
                 
-                # Extract SKU from filename (remove extension)
                 filename_without_ext = os.path.splitext(image_name)[0]
                 
-                # Try different SKU matching patterns to find and clear image field for matching products
                 sku_patterns = [
-                    filename_without_ext,  # Exact match
-                    filename_without_ext.replace("_", " "),  # Replace underscores with spaces
-                    filename_without_ext.replace("-", " "),  # Replace hyphens with spaces
-                    filename_without_ext.replace("_", ""),   # Remove underscores
-                    filename_without_ext.replace("-", ""),   # Remove hyphens
-                    filename_without_ext.replace(" ", ""),   # Remove spaces
+                    filename_without_ext, 
+                    filename_without_ext.replace("_", " "),  
+                    filename_without_ext.replace("-", " "),  
+                    filename_without_ext.replace("_", ""),   
+                    filename_without_ext.replace("-", ""),  
+                    filename_without_ext.replace(" ", ""),   
                 ]
                 
                 products_updated_by_sku = 0
                 for sku_pattern in sku_patterns:
-                    # Only update products that haven't already been updated by reference
                     matching_products = Product.objects.filter(
                         SKU__iexact=sku_pattern
                     ).exclude(
-                        product_image=None  # Avoid updating products already cleared by reference
+                        product_image=None 
                     )
                     count = matching_products.count()
                     matching_products.update(product_image=None)
                     products_updated_by_sku += count
                 
-                # Delete the media file from storage
                 if media.image and default_storage.exists(media.image.name):
                     default_storage.delete(media.image.name)
             
-            # Delete the media record
             media.delete()
             
             response_data = {
@@ -1278,173 +1085,6 @@ class MediaDeleteView(APIView):
 
 
 
-# class ProductCSVUploadView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         csv_file = request.FILES.get('file')
-        
-#         if not csv_file:
-#             return Response({"error": "No file uploaded. Please upload a CSV file."}, status=status.HTTP_400_BAD_REQUEST)
-            
-#         file_path = default_storage.save(f'tmp/{csv_file.name}', ContentFile(csv_file.read()))
-        
-#         try:
-#             with default_storage.open(file_path) as file:
-#                 decoded_file = file.read().decode('utf-8').splitlines()
-#                 reader = csv.DictReader(decoded_file)
-                
-#                 expected_headers = {
-#                     'SKU', 'product_name', 'category',
-#                     'gross_weight', 'diamond_weight', 'colour_stones',
-#                     'net_weight', 'product_image', 'usertypes'
-#                 }
-                
-#                 if not expected_headers.issubset(set(reader.fieldnames or [])):
-#                     missing_headers = expected_headers - set(reader.fieldnames or [])
-#                     return Response({"error": f"CSV file is missing required headers: {missing_headers}"}, status=status.HTTP_400_BAD_REQUEST)
-                
-#                 products_created = 0
-#                 products_updated = 0
-#                 errors = []
-                
-#                 for row_num, row in enumerate(reader, start=2):  # Start at 2 to account for header row
-#                     try:
-#                         # Validate required fields
-#                         required_fields = ['SKU', 'product_name', 'category', 'gross_weight', 'net_weight']
-#                         for field in required_fields:
-#                             if not row.get(field):
-#                                 raise ValueError(f"Field '{field}' is required but missing or empty in row {row_num}.")
-                        
-#                         # Get or create category
-#                         category_name = row['category']
-#                         category, _ = Category.objects.get_or_create(category_name=category_name)
-                        
-#                         # Check if product exists (case insensitive)
-#                         sku = row['SKU'].strip()
-#                         existing_product = Product.objects.filter(SKU__iexact=sku).first()
-                        
-#                         # Find the best matching image
-#                         image_path = self.find_product_image(sku)
-                        
-#                         if existing_product:
-#                             # Update existing product - OVERRIDE all fields
-#                             existing_product.SKU = sku  # Ensure consistent case
-#                             existing_product.product_name = row['product_name']
-#                             existing_product.category = category
-#                             existing_product.gross_weight = float(row['gross_weight']) if row['gross_weight'] else None
-#                             existing_product.diamond_weight = float(row.get('diamond_weight', 0)) if row.get('diamond_weight') else None
-#                             existing_product.colour_stones = float(row.get('colour_stones', 0)) if row.get('colour_stones') else None
-#                             existing_product.net_weight = float(row['net_weight']) if row['net_weight'] else None
-                            
-#                             # OVERRIDE image - set to found image or None
-#                             existing_product.product_image = image_path
-                            
-#                             # OVERRIDE usertypes - clear all and add new ones
-#                             existing_product.usertypes.clear()
-#                             if row.get('usertypes'):
-#                                 usertypes_list = [ut.strip() for ut in row['usertypes'].split(',') if ut.strip()]
-#                                 for usertype_name in usertypes_list:
-#                                     usertype, _ = UserType.objects.get_or_create(usertype=usertype_name)
-#                                     existing_product.usertypes.add(usertype)
-                            
-#                             existing_product.save()
-#                             products_updated += 1
-#                         else:
-#                             # Create new product
-#                             product = Product.objects.create(
-#                                 SKU=sku,
-#                                 product_name=row['product_name'],
-#                                 category=category,
-#                                 gross_weight=float(row['gross_weight']) if row['gross_weight'] else None,
-#                                 diamond_weight=float(row.get('diamond_weight', 0)) if row.get('diamond_weight') else None,
-#                                 colour_stones=float(row.get('colour_stones', 0)) if row.get('colour_stones') else None,
-#                                 net_weight=float(row['net_weight']) if row['net_weight'] else None,
-#                                 product_image=image_path
-#                             )
-                            
-#                             # Add usertypes
-#                             if row.get('usertypes'):
-#                                 usertypes_list = [ut.strip() for ut in row['usertypes'].split(',') if ut.strip()]
-#                                 for usertype_name in usertypes_list:
-#                                     usertype, _ = UserType.objects.get_or_create(usertype=usertype_name)
-#                                     product.usertypes.add(usertype)
-                            
-#                             products_created += 1
-                    
-#                     except ValueError as ve:
-#                         errors.append(f"Row {row_num}: {str(ve)}")
-#                         continue
-#                     except Exception as e:
-#                         errors.append(f"Row {row_num}: Unexpected error - {str(e)}")
-#                         continue
-            
-#             # Clean up temporary file
-#             default_storage.delete(file_path)
-            
-#             response_data = {
-#                 "message": f"CSV processed successfully. Created: {products_created} products, Updated: {products_updated} products.",
-#                 "created": products_created,
-#                 "updated": products_updated
-#             }
-            
-#             if errors:
-#                 response_data["errors"] = errors[:10]  # Limit to first 10 errors
-#                 response_data["total_errors"] = len(errors)
-            
-#             return Response(response_data, status=status.HTTP_200_OK)
-        
-#         except Exception as e:
-#             # Clean up temporary file on error
-#             if default_storage.exists(file_path):
-#                 default_storage.delete(file_path)
-#             return Response({"error": f"Failed to process the uploaded file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-#     def find_product_image(self, sku):
-#         """
-#         Find the best matching image for a given SKU.
-#         Returns the image path if found, None otherwise.
-#         """
-#         # Clean SKU for filename matching
-#         clean_sku = sku.replace(" ", "").replace("_", "")
-        
-#         # Possible image extensions
-#         extensions = ['.jpg', '.jpeg', '.png', '.webp']
-        
-#         # Possible paths to check (in order of preference)
-#         base_paths = [
-#             'media/',
-#             'media/media/',
-#             'products/',
-#             ''
-#         ]
-        
-#         for base_path in base_paths:
-#             for ext in extensions:
-#                 # Try exact match
-#                 image_filename = f"{clean_sku}{ext}"
-#                 full_path = f"{base_path}{image_filename}"
-                
-#                 if default_storage.exists(full_path):
-#                     return full_path
-                
-#                 # Try with original SKU (with spaces/underscores)
-#                 image_filename = f"{sku}{ext}"
-#                 full_path = f"{base_path}{image_filename}"
-                
-#                 if default_storage.exists(full_path):
-#                     return full_path
-        
-#         return None
-
-
-
-
-
-
-# class MediaListView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         media_images = Media.objects.all()
-#         serializer = MediaSerializer(media_images, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class MediaListView(APIView):
@@ -1467,11 +1107,7 @@ class MediaListView(APIView):
     
  
         
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
+
 
 user_model = get_user_model()
 
@@ -1950,9 +1586,7 @@ class ColorRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Color.objects.all()
     serializer_class = ColorupdateSerializer
     
-# class ColorListView(generics.ListAPIView):
-#     queryset = Color.objects.all()
-#     serializer_class = ColorSerializer
+
 
 class ColorListView(generics.ListAPIView):
     queryset = Color.objects.all().order_by('-id')
@@ -2071,7 +1705,6 @@ class FullCustomizedOrderCreateView(generics.CreateAPIView):
         return Response(order_data, status=status.HTTP_201_CREATED)
 
 
-
     
 class UserCartItemCountView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2085,12 +1718,6 @@ class OrderListView(generics.ListAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializerss
 
-
-# class OrderPendingListView(generics.ListAPIView):
-#     serializer_class = OrderSerializerss
-
-#     def get_queryset(self):
-#         return Order.objects.filter(status='pending')
 
 
 class OrderPendingListView(generics.ListAPIView):
@@ -2273,11 +1900,7 @@ class OrderAcceptOrderIdView(generics.ListAPIView):
             return Order.objects.filter(status='accepted')
 
 
-# class OrderCompleteListView(generics.ListAPIView):
-#     serializer_class = OrderSerializerss
 
-#     def get_queryset(self):
-#         return Order.objects.filter(status='delivered')
 
 
 class OrderCompleteListView(generics.ListAPIView):
@@ -2307,13 +1930,41 @@ class OrderCompleteListView(generics.ListAPIView):
 
 
 
-
 # class OrderAcceptedView(generics.ListAPIView):
 #     serializer_class = OrderSerializerss
+#     pagination_class = StandardPagination
 
 #     def get_queryset(self):
-#         return Order.objects.filter(status='accepted')
+#         return Order.objects.filter(status='accepted').order_by('-id')
 
+#     def get(self, request, *args, **kwargs):
+
+#         queryset = self.get_queryset()
+
+
+#         search = request.GET.get("search")
+#         if search:
+#             queryset = apply_search(
+#                 queryset,
+#                 search,
+#                 "order_id",        
+#                 "customer_name",   
+#                 "product_name",    
+#             )
+
+
+#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+
+#         if is_paginated:
+#             return get_paginated_response(
+#                 request=request,
+#                 queryset=queryset,
+#                 serializer_class=self.get_serializer_class()
+#             )
+
+#         serializer = self.get_serializer(queryset, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 
 class OrderAcceptedView(generics.ListAPIView):
@@ -2327,17 +1978,18 @@ class OrderAcceptedView(generics.ListAPIView):
 
         queryset = self.get_queryset()
 
-
         search = request.GET.get("search")
         if search:
             queryset = apply_search(
                 queryset,
                 search,
-                "order_id",        
-                "customer_name",   
-                "product_name",    
-            )
-
+                "order_id",
+                "customer__name",
+                "customer__phone",
+                "product__name",
+                "items__product_name",
+                
+            ).distinct()
 
         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
 
@@ -2410,13 +2062,6 @@ class DeleteOrderView(APIView):
         return Response({"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
     
  
-# class PendingOrdersView(APIView):
-#     def get(self, request):
-#         pending_orders = CustomizedOrder.objects.filter(status='pending')
-#         serializer = CustomizedOrderSerializer(pending_orders, many=True)
-#         return Response(serializer.data)
-
-
 
 class PendingOrdersView(APIView):
     def get(self, request):
@@ -2483,33 +2128,6 @@ class RejectOrderAPIView(APIView):
 
         serializer = CustomizedOrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    
-# class  ApprovedOrdersView(APIView):
-#     def get(self, request):
-#         pending_orders = CustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
-#         serializer = CustomizedOrderSerializer(pending_orders, many=True)
-#         return Response(serializer.data)
-
-
-# class ApprovedOrdersView(APIView):
-#     def get(self, request):
-
-#         queryset = CustomizedOrder.objects.filter(
-#             status='approved'
-#         ).exclude(new_status='delivered').order_by('-id')
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=CustomizedOrderSerializer
-#             )
-
-#         serializer = CustomizedOrderSerializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -2544,8 +2162,6 @@ class ApprovedOrdersView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     
-
-
 
  
 class GenerateOrderIDView(APIView):
@@ -2601,32 +2217,6 @@ class DeleteCustomizedOrderView(APIView):
             return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         
-# class FullCustomizedOrderListAPIView(APIView):
-#     def get(self, request):
-     
-#         pending_orders = FullCustomizedOrder.objects.filter(status='pending')
-#         serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-# class FullCustomizedOrderListAPIView(APIView):
-#     def get(self, request):
-
-#         queryset = FullCustomizedOrder.objects.filter(status='pending').order_by('-id')
-
-#         is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
-
-#         if is_paginated:
-#             return get_paginated_response(
-#                 request=request,
-#                 queryset=queryset,
-#                 serializer_class=FullCustomizedOrderListSerializer
-#             )
-
-#         serializer = FullCustomizedOrderListSerializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class FullCustomizedOrderListAPIView(APIView):
     def get(self, request):
 
@@ -2685,11 +2275,7 @@ class RejectFullOrderAPIView(APIView):
         serializer = FullCustomizedOrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-# class  ApprovedFullOrdersView(APIView):
-#     def get(self, request):
-#         pending_orders = FullCustomizedOrder.objects.filter(status='approved').exclude(new_status='delivered')
-#         serializer = FullCustomizedOrderListSerializer(pending_orders, many=True)
-#         return Response(serializer.data)
+
 
 
 class ApprovedFullOrdersView(APIView):
@@ -2965,11 +2551,6 @@ class ContactMessageAPIView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
-# class DeliveredOrdersView(APIView):
-#     def get(self, request, format=None): 
-#         delivered_orders = CustomizedOrder.objects.filter(new_status='delivered')   
-#         serializer = CustomizedOrderSerializer(delivered_orders, many=True)    
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DeliveredOrdersView(APIView):
@@ -3001,15 +2582,6 @@ class DeliveredOrdersView(APIView):
 
         serializer = CustomizedOrderSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
-
-# class DeliveredFullOrdersView(APIView):
-#     def get(self, request, format=None):
-#         delivered_orders = FullCustomizedOrder.objects.filter(new_status='delivered')   
-#         serializer = FullCustomizedOrderListSerializer(delivered_orders, many=True)     
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
 
@@ -3043,7 +2615,6 @@ class DeliveredFullOrdersView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-    
     
 class OrderStatusUpdateAPIView(APIView):
     def patch(self, request, order_id):
