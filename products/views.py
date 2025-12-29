@@ -2055,6 +2055,7 @@ class OrderUpdateAPIView(APIView):
         return Response({'ordercode': order.ordercode, 'order_items': order_items_data}, status=status.HTTP_200_OK)
 
 
+
 class DeleteOrderView(APIView):
     def delete(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
@@ -2677,3 +2678,50 @@ class  UserCompleteApprovedFullOrdersView(APIView):
         return Response(serializer.data)
     
     
+
+
+class OrderItemListView(APIView):
+    def get(self, request, format=None):
+
+        status_filter = request.GET.get("status") 
+
+        queryset = OrderItem.objects.all()
+
+        if status_filter:
+            queryset = queryset.filter(order__status=status_filter)
+
+        queryset = queryset.select_related(
+            'order',
+            'order__user',
+            'product',
+            'product__category'
+        ).order_by('-id')
+
+        # Search
+        search = request.GET.get("search")
+        if search:
+            queryset = apply_search(
+                queryset,
+                search,
+                "product__product_name",
+                "product__SKU",
+                "product__category__category_name",
+                "order__user__company_name",
+            )
+
+        # Pagination
+        is_paginated = str(request.GET.get("is_paginated")).lower() == "true"
+        if is_paginated:
+            return get_paginated_response(
+                request=request,
+                queryset=queryset,
+                serializer_class=OrderItemOrderDetailsSerializer
+            )
+
+        serializer = OrderItemOrderDetailsSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+

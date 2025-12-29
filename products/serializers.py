@@ -287,7 +287,7 @@ class CartSerializer(serializers.ModelSerializer):
             user=validated_data.get('user'),
             product=product,
             quantity=quantity,
-            color=color,  # Set color here
+            color=color,  
             gross_weight=gross_weight,
             diamond_weight=diamond_weight,
             colour_stones=colour_stones,
@@ -327,7 +327,6 @@ class CartGetSerializer(serializers.ModelSerializer):
 
 
 
-
 class OrderItemSerializer(serializers.ModelSerializer):
     product = serializers.CharField()  
     color = serializers.CharField(required=False, allow_blank=True, default=None)
@@ -358,6 +357,8 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields =  '__all__'
         extra_kwargs = {'user': {'read_only': True}}
+        
+           
 
     def create(self, validated_data):
         order_items_data = validated_data.pop('order_items')
@@ -397,6 +398,63 @@ class OrderSerializer(serializers.ModelSerializer):
         order.save()
 
         return order
+    
+
+
+class OrderItemOrderDetailsSerializer(serializers.ModelSerializer):
+    # IDs
+    order_item_id = serializers.IntegerField(source='id', read_only=True)
+    order_id = serializers.IntegerField(source='order.id', read_only=True)
+    user_id = serializers.IntegerField(source='order.user.id', read_only=True)
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
+    category_id = serializers.IntegerField(
+        source='product.category.id',
+        read_only=True
+    )
+
+    # Display fields
+    company_name = serializers.CharField(
+        source='order.user.company_name',
+        read_only=True
+    )
+    status = serializers.CharField(
+        source='order.status',
+        read_only=True
+    )
+    sku = serializers.CharField(
+        source='product.SKU',
+        read_only=True
+    )
+    product_name = serializers.CharField(
+        source='product.product_name',
+        read_only=True
+    )
+    product_category = serializers.CharField(
+        source='product.category.category_name',
+        read_only=True
+    )
+
+    class Meta:
+        model = OrderItem
+        fields = [
+            'order_item_id',
+            'order_id',
+            'user_id',
+            'product_id',
+            'category_id',
+
+        
+            'company_name',
+            'status',
+            'sku',
+            'product_name',
+            'product_category',
+            'quantity',
+        ]
+
+
+    
+        
     
 class UserGetSerializer(serializers.ModelSerializer):
     class Meta:
