@@ -433,6 +433,10 @@ class OrderItemOrderDetailsSerializer(serializers.ModelSerializer):
         source='product.category.category_name',
         read_only=True
     )
+    ordercode = serializers.CharField(
+        source='order.ordercode',
+        read_only=True
+    )
 
     class Meta:
         model = OrderItem
@@ -450,6 +454,7 @@ class OrderItemOrderDetailsSerializer(serializers.ModelSerializer):
             'product_name',
             'product_category',
             'quantity',
+            'ordercode'
         ]
 
 

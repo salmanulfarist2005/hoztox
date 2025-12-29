@@ -53,7 +53,7 @@ from .models import Product, Category, UserType, Media
 from .serializers import MediaSerializer
 import django.db.models as models
 from .utils import StandardPagination
-
+from django.db.models.functions import Random
 
 class UserTypeListCreateView(generics.ListCreateAPIView):
     queryset = UserType.objects.all()
@@ -266,9 +266,12 @@ class ProductuserListView(APIView):
     def get(self, request, *args, **kwargs):
         current_user_usertype = request.user.usertypes  
 
+        limit  = request.GET.get("limit_bestsellers")
         queryset = Product.objects.filter(
             usertypes=current_user_usertype
-        ).order_by('-id')
+        )  
+        if limit and limit.isdigit():
+            queryset = queryset.order_by(Random())[:int(limit)]
 
         search = request.GET.get("search")
         if search:
