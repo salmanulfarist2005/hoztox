@@ -58,7 +58,7 @@ urlpatterns = [
    path('cart/<str:sku>/', CartItemDeleteAPIView.as_view(), name='cart-item-delete'),  
    path('cart/update/<str:sku>/', UpdateCartQuantityView.as_view(), name='update-cart-quantity'), 
    path('cart-items/', CartItemsView.as_view(), name='cart-items-list'),
-   path('cart/item-count/', UserCartItemCountView.as_view(), name='user-cart-item-count'),
+   path('cart/item/count/', UserCartItemCountView.as_view(), name='user-cart-item-count'),
   
   #  contact
    path('contact/', ContactMessageAPIView.as_view(), name='contact-form'),
