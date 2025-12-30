@@ -14,16 +14,19 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
- 
+
 
 SECRET_KEY = config('SECRET_KEY')
- 
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+DEBUG = config('DEBUG',cast=bool)
+
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS  = ['*']
 AUTH_USER_MODEL = 'products.User' 
 
 
@@ -86,7 +89,9 @@ TEMPLATES = [
         },
     },
 ]
+# Add this to your Django settings.py to ensure JWT is properly configured
 
+# Make sure your REST_FRAMEWORK settings explicitly include JWT authentication
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny'
@@ -104,6 +109,7 @@ REST_FRAMEWORK = {
     ]
 }
 
+# Verify these SIMPLE_JWT settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
@@ -126,24 +132,67 @@ SIMPLE_JWT = {
 }
 TIME_ZONE = 'Asia/Kolkata'
 
+# SIMPLE_JWT = {
+#     "ACCESS_TOKEN_LIFETIME":  timedelta(days=365),
+#     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
+#     "ROTATE_REFRESH_TOKENS": True,
+#     "BLACKLIST_AFTER_ROTATION": True,
+#     "UPDATE_LAST_LOGIN": False,
 
+#     "ALGORITHM": "HS256",
+
+#     "VERIFYING_KEY": "",
+#     "AUDIENCE": None,
+#     "ISSUER": None,
+#     "JSON_ENCODER": None,
+#     "JWK_URL": None,
+#     "LEEWAY": 0,
+
+#     "AUTH_HEADER_TYPES": ("Bearer",),
+#     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+#     "USER_ID_FIELD": "id",
+#     "USER_ID_CLAIM": "user_id",
+#     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+
+#     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+#     "TOKEN_TYPE_CLAIM": "token_type",
+#     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+
+#     "JTI_CLAIM": "jti",
+
+#     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+#     "SLIDING_TOKEN_LIFETIME": timedelta(days=365),
+#     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=365),
+
+#     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+#     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+#     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+#     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
+#     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+#     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+# }
 
 WSGI_APPLICATION = 'thavakkal.wsgi.application'
- 
 
 
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': config('DATABASE_ENGINE'),
+#         'NAME': config('DATABASE_NAME'),
+#         'USER': config('DATABASE_USER'),
+#         'PASSWORD': config('DATABASE_PASSWORD'),
+#         'HOST': config('DATABASE_HOST'),
+#         'PORT': config('DATABASE_PORT'),
+#     }
+# }
 
 DATABASES = {
-    'default': {
-        'ENGINE': config('DATABASE_ENGINE'),
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
-    }
+    'default': {}
 }
 
+DATABASES['default'] = dj_database_url.parse(config('DATABASE_URL'))
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -185,9 +234,13 @@ CORS_ALLOWED_ORIGINS = [
     "https://shop.caratreediamonds.com",
     "https://master.d3btcpc72guulu.amplifyapp.com",
     "https://main.d1c5fqrayqg473.amplifyapp.com",
-    "https://portal.caratreediamonds.com"
+    "https://portal.caratreediamonds.com",
+    "https://hoztox-o4rf.onrender.com"
     
    
+    # "https://hoztox-o4rf.onrender.com",
+    "https://fancy-pastelito-59a707.netlify.app"
+ 
 ]
 
 # Static files (CSS, JavaScript, Images)
@@ -209,6 +262,3 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587 
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-
-
- 
