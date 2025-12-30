@@ -53,9 +53,12 @@ from .models import Product, Category, UserType, Media
 from .serializers import MediaSerializer
 import django.db.models as models
 from .utils import StandardPagination
-
+from django.db.models.functions import Random
 
 class UserTypeListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    
     queryset = UserType.objects.all()
     serializer_class = UserTypeSerializer
 
@@ -63,6 +66,8 @@ class UserTypeListCreateView(generics.ListCreateAPIView):
 
 
 class UserTypeListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = UserType.objects.all().order_by('-id')
     serializer_class = UserTypeSerializer
     pagination_class = StandardPagination
@@ -97,10 +102,14 @@ class UserTypeListView(generics.ListAPIView):
 
  
 class UserTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    
     queryset = UserType.objects.all()
     serializer_class = UserTypeSerializer
     
 class CategoryCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
@@ -112,6 +121,8 @@ class CategoryCreateAPIView(APIView):
 
 
 class CategoryListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
 
     def get(self, request, *args, **kwargs):
         queryset = Category.objects.all().order_by('id')
@@ -138,6 +149,8 @@ class CategoryListAPIView(APIView):
     
 
 class CategoryDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, id):
         try:
             return Category.objects.get(id=id)
@@ -179,6 +192,8 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     
 
 class ProductListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         print("Request Data:", request.data)
 
@@ -266,9 +281,12 @@ class ProductuserListView(APIView):
     def get(self, request, *args, **kwargs):
         current_user_usertype = request.user.usertypes  
 
+        limit  = request.GET.get("limit_bestsellers")
         queryset = Product.objects.filter(
             usertypes=current_user_usertype
-        ).order_by('-id')
+        )  
+        if limit and limit.isdigit():
+            queryset = queryset.order_by(Random())[:int(limit)]
 
         search = request.GET.get("search")
         if search:
@@ -300,6 +318,8 @@ class ProductuserListView(APIView):
 
 
 class ProductUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
@@ -364,6 +384,8 @@ class ProductUpdateView(APIView):
 
 
 class ProductDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
 
     def get_object(self, id):
         try:
@@ -397,6 +419,7 @@ class ProductDeleteView(APIView):
     
     
 class CustomizedProductDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = CustomizedProduct.objects.all()
     serializer_class = CustomizedProductListSerializer
     
@@ -405,6 +428,8 @@ class CustomizedProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CustomizedProductListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         print("Request Data:", request.data)
 
@@ -455,6 +480,7 @@ class CustomizedProductListCreateView(APIView):
 
 
 class CustomizedProductListView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
@@ -525,6 +551,7 @@ class CustomProductuserListView(APIView):
 
  
 class CustomizedProductUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
     def put(self, request, pk):
         try:
             product = CustomizedProduct.objects.get(pk=pk)
@@ -583,6 +610,7 @@ class CustomizedProductUpdateView(APIView):
 
 
 class CustomizedProductDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, id):
         try:
@@ -607,6 +635,7 @@ class CustomizedProductDeleteView(APIView):
  
 
 class UserCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -625,6 +654,7 @@ class UserCreateView(generics.CreateAPIView):
     
 
 class UserListAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.filter(is_staff=False)
     serializer_class = UserSerializer
     pagination_class = StandardPagination
@@ -659,6 +689,7 @@ class UserListAPIView(generics.ListAPIView):
  
 
 class UserUpdateAPIView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserUpdateSerializer
     lookup_field = 'id'
@@ -688,6 +719,7 @@ class UserUpdateAPIView(generics.UpdateAPIView):
 
 
 class UserDeleteView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer  
 
@@ -726,6 +758,7 @@ class AdminLoginView(APIView):
  
 
 class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
     def put(self, request, *args, **kwargs):
         new_password = request.data.get('new_password')
         confirm_password = request.data.get('confirm_password')
@@ -766,6 +799,7 @@ class ChangePasswordView(APIView):
 
 
 class MediaUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         images = request.FILES.getlist('images')
         
@@ -841,6 +875,8 @@ class MediaUploadView(APIView):
 
 
 class ProductCSVUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         csv_file = request.FILES.get('file')
         
@@ -1025,6 +1061,7 @@ class ProductCSVUploadView(APIView):
     
     
 class MediaDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, pk):
         try:
             media = Media.objects.get(pk=pk)
@@ -1088,6 +1125,7 @@ class MediaDeleteView(APIView):
 
 
 class MediaListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
 
         queryset = Media.objects.all().order_by('-id')
@@ -1112,6 +1150,7 @@ class MediaListView(APIView):
 user_model = get_user_model()
 
 class UserLoginView(APIView):
+    
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -1158,6 +1197,8 @@ class UserLoginView(APIView):
 
 
 class ProductDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, pk):  
         try:
             product = Product.objects.get(id=pk)   
@@ -1170,6 +1211,7 @@ class ProductDetailView(APIView):
  
 
 class ProductSKUDetailView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, SKU): 
         try:
             product = Product.objects.get(SKU=SKU)   
@@ -1183,6 +1225,7 @@ class ProductSKUDetailView(APIView):
 
  
 class AddToCartView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
@@ -1267,6 +1310,7 @@ class CartItemDeleteAPIView(generics.DestroyAPIView):
  
 
 class OrderCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -1350,6 +1394,7 @@ class CurrentUserView(APIView):
 
     
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserGetSerializer 
     update_serializer_class = UserGetSerializer   
@@ -1503,10 +1548,12 @@ class  UserApprovedFullOrdersView(APIView):
     
     
 class CustomizedProductDetail(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = CustomizedProduct.objects.all()
     serializer_class = CustomizedProductListSerializer
 
 class CustomizedProductSKUDetailView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, SKU): 
         try:
             product = CustomizedProduct.objects.get(SKU=SKU)   
@@ -1579,16 +1626,19 @@ class CustomizedOrderCreateView(generics.CreateAPIView):
 
 
 class ColorListCreate(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Color.objects.all()
     serializer_class = ColorSerializer
 
 class ColorRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Color.objects.all()
     serializer_class = ColorupdateSerializer
     
 
 
 class ColorListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Color.objects.all().order_by('-id')
     serializer_class = ColorSerializer
     pagination_class = StandardPagination
@@ -1715,12 +1765,14 @@ class UserCartItemCountView(APIView):
         return Response({'cart_item_count': cart_item_count})
     
 class OrderListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Order.objects.all()
     serializer_class = OrderSerializerss
 
 
 
 class OrderPendingListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializerss
     pagination_class = StandardPagination   
 
@@ -1757,6 +1809,7 @@ class OrderPendingListView(generics.ListAPIView):
 
 class OrderItemsByOrderIdView(generics.ListAPIView):
     serializer_class = OrderSerializerss
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
  
@@ -1769,8 +1822,10 @@ class OrderItemsByOrderIdView(generics.ListAPIView):
 
             return Order.objects.filter(status='pending')
         
+        
 #new viwess
 class OrderItemListByOrderIdView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = OrderItemListSerializer  
     pagination_class = StandardPagination
 
@@ -1816,6 +1871,7 @@ import csv
 from django.http import HttpResponse
 
 class OrderItemsCSVDownloadView(APIView):
+    
 
     def get_queryset(self, request, order_id):
         queryset = OrderItem.objects.all().order_by("-id")
@@ -1887,6 +1943,7 @@ class OrderItemsCSVDownloadView(APIView):
 
 class OrderAcceptOrderIdView(generics.ListAPIView):
     serializer_class = OrderSerializerss
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
  
@@ -1904,6 +1961,7 @@ class OrderAcceptOrderIdView(generics.ListAPIView):
 
 
 class OrderCompleteListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializerss
     pagination_class = StandardPagination
 
@@ -1968,6 +2026,7 @@ class OrderCompleteListView(generics.ListAPIView):
 
 
 class OrderAcceptedView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializerss
     pagination_class = StandardPagination
 
@@ -2021,6 +2080,7 @@ class OrderUpdateAPIView(APIView):
 
 
 class OrderUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
   
         order = Order.objects.filter(pk=pk).first()
@@ -2057,6 +2117,7 @@ class OrderUpdateAPIView(APIView):
 
 
 class DeleteOrderView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
         order.delete()
@@ -2065,6 +2126,7 @@ class DeleteOrderView(APIView):
  
 
 class PendingOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
 
         queryset = CustomizedOrder.objects.filter(status='pending').order_by('-id')
@@ -2096,6 +2158,7 @@ class PendingOrdersView(APIView):
 
 
 class OrderApprovalView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
         try:
             order = CustomizedOrder.objects.get(pk=pk)
@@ -2117,6 +2180,7 @@ class OrderApprovalView(APIView):
 
 
 class RejectOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
         try:
             order = CustomizedOrder.objects.get(pk=pk)
@@ -2133,6 +2197,7 @@ class RejectOrderAPIView(APIView):
 
 
 class ApprovedOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
 
         queryset = CustomizedOrder.objects.filter(
@@ -2166,6 +2231,7 @@ class ApprovedOrdersView(APIView):
 
  
 class GenerateOrderIDView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk=None):
         order = get_object_or_404(CustomizedOrder, pk=pk)
         ordercode = request.data.get('ordercode')
@@ -2191,6 +2257,7 @@ class GenerateOrderIDView(APIView):
 
     
 class UpdateCustomizedOrderView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, order_id):
         try:
       
@@ -2208,6 +2275,7 @@ class UpdateCustomizedOrderView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class DeleteCustomizedOrderView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, order_id):
         try:
         
@@ -2219,6 +2287,7 @@ class DeleteCustomizedOrderView(APIView):
         
         
 class FullCustomizedOrderListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
 
         queryset = FullCustomizedOrder.objects.filter(status='pending').order_by('-id')
@@ -2247,6 +2316,7 @@ class FullCustomizedOrderListAPIView(APIView):
     
     
 class OrderFullApprovalView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
         try:
             order = FullCustomizedOrder.objects.get(pk=pk)
@@ -2264,6 +2334,7 @@ class OrderFullApprovalView(APIView):
             return Response({"error": "Invalid data."}, status=status.HTTP_400_BAD_REQUEST)
         
 class RejectFullOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
         try:
             order = FullCustomizedOrder.objects.get(pk=pk)
@@ -2280,6 +2351,7 @@ class RejectFullOrderAPIView(APIView):
 
 
 class ApprovedFullOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
 
         queryset = FullCustomizedOrder.objects.filter(
@@ -2313,6 +2385,7 @@ class ApprovedFullOrdersView(APIView):
  
     
 class GenerateFullOrderIDView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, pk=None):
         order = get_object_or_404(FullCustomizedOrder, pk=pk)
         ordercode = request.data.get('ordercode')
@@ -2343,6 +2416,7 @@ class GenerateFullOrderIDView(APIView):
 
 
 class UpdateFullCustomizedOrderView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, order_id):
         try:
       
@@ -2360,6 +2434,7 @@ class UpdateFullCustomizedOrderView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class DeleteFullCustomizedOrderView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, order_id):
         try:
         
@@ -2371,6 +2446,7 @@ class DeleteFullCustomizedOrderView(APIView):
         
         
 class UpdateOrderStatusView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, order_id):
         print("request",request.data)
         try:
@@ -2387,6 +2463,7 @@ class UpdateOrderStatusView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UpdateFullOrderStatusView(APIView):
+    permission_classes = [IsAuthenticated]
     def patch(self, request, order_id):
         print("request",request.data)
         try:
@@ -2406,6 +2483,7 @@ class UpdateFullOrderStatusView(APIView):
 
 
 class StatusCSVUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         if 'file' not in request.FILES:
             return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2476,6 +2554,7 @@ class StatusCSVUploadView(APIView):
 
 
 class StatusFullCSVUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         if 'file' not in request.FILES:
             return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2555,6 +2634,8 @@ class ContactMessageAPIView(APIView):
 
 
 class DeliveredOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, format=None):
 
         queryset = CustomizedOrder.objects.filter(
@@ -2587,6 +2668,8 @@ class DeliveredOrdersView(APIView):
 
 
 class DeliveredFullOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, format=None):
 
         queryset = FullCustomizedOrder.objects.filter(
@@ -2618,6 +2701,8 @@ class DeliveredFullOrdersView(APIView):
 
     
 class OrderStatusUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
         serializer = OrderStatusUpdateSerializer(order, data=request.data, partial=True)
@@ -2681,6 +2766,7 @@ class  UserCompleteApprovedFullOrdersView(APIView):
 
 
 class OrderItemListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
 
         status_filter = request.GET.get("status") 
