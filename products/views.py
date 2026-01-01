@@ -284,7 +284,7 @@ class ProductuserListView(APIView):
         limit  = request.GET.get("limit_bestsellers")
         queryset = Product.objects.filter(
             usertypes=current_user_usertype
-        )  
+        ).order_by('-id')  
         if limit and limit.isdigit():
             queryset = queryset.order_by(Random())[:int(limit)]
 
